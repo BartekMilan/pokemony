@@ -43,10 +43,17 @@ export function useMapPins(): UseMapPinsResult {
         const raw = await AsyncStorage.getItem(MAP_PINS_STORAGE_KEY);
         if (cancelled) return;
         if (raw !== null) {
-          const parsed = JSON.parse(raw) as MapPin[];
+          type StoredPin = Omit<MapPin, 'pokemonTypes'> & {
+            pokemonTypes?: string[];
+          };
+          const parsed = JSON.parse(raw) as StoredPin[];
           if (Array.isArray(parsed)) {
-            pinsRef.current = parsed;
-            setPins(parsed);
+            const hydrated: MapPin[] = parsed.map((pin) => ({
+              ...pin,
+              pokemonTypes: pin.pokemonTypes ?? [],
+            }));
+            pinsRef.current = hydrated;
+            setPins(hydrated);
           }
         }
       } catch {
@@ -80,6 +87,7 @@ export function useMapPins(): UseMapPinsResult {
           pokemonId: pokemon.id,
           pokemonName: pokemon.name,
           pokemonSprite: sprite,
+          pokemonTypes: pokemon.types.map((t) => t.type.name),
         };
 
         const next = [...pinsRef.current, newPin];

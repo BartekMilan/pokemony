@@ -5,4 +5,5 @@ export type MapPin = {
   pokemonId: number;
   pokemonName: string;
   pokemonSprite: string;
+  pokemonTypes: string[];
 };

@@ -1,0 +1,1 @@
+export { SightingsStats } from './SightingsStats';

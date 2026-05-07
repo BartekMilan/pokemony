@@ -11,6 +11,8 @@ import MapView, { Marker } from 'react-native-maps';
 import type { LongPressEvent, Region } from 'react-native-maps';
 
 import { PokemonBottomSheet } from '../components/PokemonBottomSheet';
+import { SightingsStats } from '../components/SightingsStats';
+import { TypeFilter } from '../components/TypeFilter';
 import { useLocation } from '../hooks/useLocation';
 import { useMapPins } from '../hooks/useMapPins';
 import type { TabParamList } from '../navigation/types';
@@ -39,6 +41,12 @@ export function MapScreen(_props: Props) {
   const [, setSelectedPin] = useState<MapPin | null>(null);
   const [detailPokemon, setDetailPokemon] = useState<Pokemon | null>(null);
   const [isAddingPin, setIsAddingPin] = useState<boolean>(false);
+  const [selectedType, setSelectedType] = useState<string | null>(null);
+
+  const visiblePins =
+    selectedType === null
+      ? pins
+      : pins.filter((p) => p.pokemonTypes.includes(selectedType));
 
   const initialRegion: Region =
     location !== null
@@ -90,7 +98,7 @@ export function MapScreen(_props: Props) {
         showsUserLocation={hasPermission}
         onLongPress={handleLongPress}
       >
-        {pins.map((pin) => (
+        {visiblePins.map((pin) => (
           <Marker
             key={pin.id}
             coordinate={{ latitude: pin.latitude, longitude: pin.longitude }}
@@ -109,6 +117,14 @@ export function MapScreen(_props: Props) {
           </Marker>
         ))}
       </MapView>
+
+      <SightingsStats pins={pins} />
+
+      <TypeFilter
+        pins={pins}
+        selectedType={selectedType}
+        onSelectType={setSelectedType}
+      />
 
       {isLoadingPins && (
         <View style={styles.loadingOverlay} pointerEvents="none">

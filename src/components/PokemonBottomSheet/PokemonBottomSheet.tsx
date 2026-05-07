@@ -12,7 +12,7 @@ type Props = {
 
 export function PokemonBottomSheet({ pokemon, onClose }: Props) {
   const ref = useRef<BottomSheet>(null);
-  const snapPoints = useMemo<string[]>(() => ['50%', '90%'], []);
+  const snapPoints = useMemo<string[]>(() => ['100%'], []);
 
   useEffect(() => {
     if (pokemon !== null) {
