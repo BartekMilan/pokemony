@@ -18,14 +18,13 @@ function notify(): void {
 type UseFavoritePokemonResult = {
   favorite: Pokemon | null;
   isLoading: boolean;
-  error: string | null;
   setFavorite: (pokemon: Pokemon) => Promise<void>;
+  clearFavorite: () => Promise<void>;
 };
 
 export function useFavoritePokemon(): UseFavoritePokemonResult {
   const [favorite, setFav] = useState<Pokemon | null>(cachedFavorite);
   const [isLoading, setIsLoading] = useState<boolean>(!isHydrated);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const listener = (next: Pokemon | null): void => {
@@ -51,11 +50,8 @@ export function useFavoritePokemon(): UseFavoritePokemonResult {
         }
         isHydrated = true;
         notify();
-      } catch (err) {
-        if (cancelled) return;
-        setError(
-          err instanceof Error ? err.message : 'Failed to load favorite',
-        );
+      } catch {
+        // Reading the favorite must never crash the app — fall through to empty state.
       } finally {
         if (!cancelled) {
           setIsLoading(false);
@@ -68,17 +64,27 @@ export function useFavoritePokemon(): UseFavoritePokemonResult {
   }, []);
 
   const setFavorite = useCallback(async (pokemon: Pokemon): Promise<void> => {
+    cachedFavorite = pokemon;
+    notify();
     try {
-      cachedFavorite = pokemon;
-      notify();
       await AsyncStorage.setItem(
         FAVORITE_STORAGE_KEY,
         JSON.stringify(pokemon),
       );
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save favorite');
+    } catch {
+      // Persistence is best-effort — UI already reflects the optimistic update.
     }
   }, []);
 
-  return { favorite, isLoading, error, setFavorite };
+  const clearFavorite = useCallback(async (): Promise<void> => {
+    cachedFavorite = null;
+    notify();
+    try {
+      await AsyncStorage.removeItem(FAVORITE_STORAGE_KEY);
+    } catch {
+      // Best-effort.
+    }
+  }, []);
+
+  return { favorite, isLoading, setFavorite, clearFavorite };
 }

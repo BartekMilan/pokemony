@@ -1,25 +1,75 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { useEffect } from 'react';
+import {
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 
+import { EmptyState } from '../components/EmptyState';
+import { PokemonDetail } from '../components/PokemonDetail';
+import { useFavoritePokemon } from '../hooks/useFavoritePokemon';
 import type { TabParamList } from '../navigation/types';
 
 type Props = BottomTabScreenProps<TabParamList, 'Favorites'>;
 
-export function FavoritesScreen(_props: Props) {
-  return (
-    <View style={styles.container}>
-      <Text style={styles.text}>FavoritesScreen</Text>
-    </View>
-  );
+export function FavoritesScreen({ navigation }: Props) {
+  const { favorite, isLoading, clearFavorite } = useFavoritePokemon();
+
+  useEffect(() => {
+    if (favorite !== null) {
+      navigation.setOptions({
+        headerRight: () => (
+          <TouchableOpacity
+            onPress={clearFavorite}
+            style={styles.headerButton}
+          >
+            <Text style={styles.headerButtonText}>Remove ✕</Text>
+          </TouchableOpacity>
+        ),
+      });
+    } else {
+      navigation.setOptions({ headerRight: undefined });
+    }
+  }, [favorite, clearFavorite, navigation]);
+
+  if (isLoading) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color="#6b7280" />
+      </View>
+    );
+  }
+
+  if (favorite === null) {
+    return (
+      <EmptyState
+        icon="🎯"
+        title="No favorite yet"
+        subtitle="Browse the Pokémon list and set one as your favorite"
+      />
+    );
+  }
+
+  return <PokemonDetail pokemon={favorite} actionButton={null} />;
 }
 
 const styles = StyleSheet.create({
-  container: {
+  centered: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  text: {
-    fontSize: 18,
+  headerButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginRight: 8,
+  },
+  headerButtonText: {
+    color: '#b91c1c',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });
