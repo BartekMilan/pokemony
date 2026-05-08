@@ -56,19 +56,18 @@ const PokemonMarker = memo(function PokemonMarker({
       coordinate={{ latitude: pin.latitude, longitude: pin.longitude }}
       onPress={onPress}
       tracksViewChanges={!imageLoaded}
+      anchor={{ x: 0.5, y: 1 }}
     >
-      <View style={styles.markerShadow}>
-        <View style={styles.markerContainer}>
-          <Image
-            source={{ uri: pin.pokemonSprite }}
-            style={styles.markerSprite}
-            resizeMode="contain"
-            onLoadEnd={handleLoadEnd}
-          />
-          <Text style={styles.markerLabel} numberOfLines={1}>
-            {capitalize(pin.pokemonName)}
-          </Text>
-        </View>
+      <View style={styles.markerCard}>
+        <Image
+          source={{ uri: pin.pokemonSprite }}
+          style={styles.markerSprite}
+          resizeMode="contain"
+          onLoadEnd={handleLoadEnd}
+        />
+        <Text style={styles.markerLabel} numberOfLines={1}>
+          {capitalize(pin.pokemonName)}
+        </Text>
       </View>
     </Marker>
   );
@@ -186,27 +185,25 @@ const styles = StyleSheet.create({
   map: {
     ...StyleSheet.absoluteFillObject,
   },
-  markerShadow: {
-    borderRadius: 8,
-    backgroundColor: '#ffffff',
-    shadowColor: '#000000',
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    shadowOffset: { width: 0, height: 1 },
-    elevation: 3,
-  },
-  markerContainer: {
-    overflow: 'hidden',
+  markerCard: {
+    width: 52,
     borderRadius: 8,
     backgroundColor: '#ffffff',
     paddingHorizontal: 6,
     paddingTop: 4,
     paddingBottom: 3,
     alignItems: 'center',
+    elevation: 3,
+    shadowColor: '#000000',
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 1 },
+    ...Platform.select({ ios: { overflow: 'hidden' } }),
   },
   markerSprite: {
     width: 40,
     height: 40,
+    backgroundColor: '#ffffff',
   },
   markerLabel: {
     fontSize: 9,
