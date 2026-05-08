@@ -63,9 +63,9 @@ export function SightingsStats({ pins }: Props) {
 
 const styles = StyleSheet.create({
   card: {
-    position: 'absolute',
-    top: 16,
-    left: 16,
+    alignSelf: 'flex-start',
+    marginTop: 16,
+    marginLeft: 16,
     maxWidth: 220,
     backgroundColor: '#ffffff',
     borderRadius: 12,

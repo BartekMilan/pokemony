@@ -1,5 +1,5 @@
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
-import { useCallback, useState } from 'react';
+import { memo, useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -35,6 +35,44 @@ function capitalize(value: string): string {
   if (value.length === 0) return value;
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
+
+type PokemonMarkerProps = {
+  pin: MapPin;
+  onPress: () => void;
+};
+
+const PokemonMarker = memo(function PokemonMarker({
+  pin,
+  onPress,
+}: PokemonMarkerProps) {
+  const [imageLoaded, setImageLoaded] = useState<boolean>(false);
+
+  const handleLoadEnd = useCallback((): void => {
+    setImageLoaded(true);
+  }, []);
+
+  return (
+    <Marker
+      coordinate={{ latitude: pin.latitude, longitude: pin.longitude }}
+      onPress={onPress}
+      tracksViewChanges={!imageLoaded}
+    >
+      <View style={styles.markerShadow}>
+        <View style={styles.markerContainer}>
+          <Image
+            source={{ uri: pin.pokemonSprite }}
+            style={styles.markerSprite}
+            resizeMode="contain"
+            onLoadEnd={handleLoadEnd}
+          />
+          <Text style={styles.markerLabel} numberOfLines={1}>
+            {capitalize(pin.pokemonName)}
+          </Text>
+        </View>
+      </View>
+    </Marker>
+  );
+});
 
 export function MapScreen(_props: Props) {
   const { pins, isLoading: isLoadingPins, addPin } = useMapPins();
@@ -103,23 +141,11 @@ export function MapScreen(_props: Props) {
         onLongPress={handleLongPress}
       >
         {visiblePins.map((pin) => (
-          <Marker
+          <PokemonMarker
             key={pin.id}
-            coordinate={{ latitude: pin.latitude, longitude: pin.longitude }}
+            pin={pin}
             onPress={() => handlePinPress(pin)}
-            tracksViewChanges={false}
-          >
-            <View style={styles.markerContainer}>
-              <Image
-                source={{ uri: pin.pokemonSprite }}
-                style={styles.markerSprite}
-                resizeMode="contain"
-              />
-              <Text style={styles.markerLabel} numberOfLines={1}>
-                {capitalize(pin.pokemonName)}
-              </Text>
-            </View>
-          </Marker>
+          />
         ))}
       </MapView>
 
@@ -160,18 +186,23 @@ const styles = StyleSheet.create({
   map: {
     ...StyleSheet.absoluteFillObject,
   },
-  markerContainer: {
-    backgroundColor: '#ffffff',
+  markerShadow: {
     borderRadius: 8,
-    paddingHorizontal: 6,
-    paddingTop: 4,
-    paddingBottom: 3,
-    alignItems: 'center',
+    backgroundColor: '#ffffff',
     shadowColor: '#000000',
     shadowOpacity: 0.2,
     shadowRadius: 3,
     shadowOffset: { width: 0, height: 1 },
     elevation: 3,
+  },
+  markerContainer: {
+    overflow: 'hidden',
+    borderRadius: 8,
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 6,
+    paddingTop: 4,
+    paddingBottom: 3,
+    alignItems: 'center',
   },
   markerSprite: {
     width: 40,
@@ -179,7 +210,7 @@ const styles = StyleSheet.create({
   },
   markerLabel: {
     fontSize: 9,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#111827',
     textTransform: 'capitalize',
     marginTop: 2,

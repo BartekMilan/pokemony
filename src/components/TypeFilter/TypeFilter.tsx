@@ -92,10 +92,8 @@ export function TypeFilter({ pins, selectedType, onSelectType }: Props) {
 
 const styles = StyleSheet.create({
   wrapper: {
-    position: 'absolute',
-    top: 80,
-    left: 16,
-    right: 16,
+    marginTop: 12,
+    marginHorizontal: 16,
   },
   scrollContent: {
     paddingRight: 8,

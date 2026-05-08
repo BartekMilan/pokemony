@@ -26,12 +26,21 @@
       "package": "com.anonymous.tempapp",
       "config": {
         "googleMaps": {
-          "apiKey": "YOUR_GOOGLE_MAPS_API_KEY"
+          "apiKey": "AIzaSyDO6OajJtSbqyx0yXlCfKCQYDVFu5zNB9k"
         }
       }
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location to show Pokémon near you.",
+          "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location to show Pokémon near you."
+        }
+      ]
+    ]
   }
 }
