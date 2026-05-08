@@ -3,11 +3,13 @@ import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
+  Platform,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import type { LongPressEvent, Region } from 'react-native-maps';
 
 import { PokemonBottomSheet } from '../components/PokemonBottomSheet';
@@ -37,6 +39,7 @@ function capitalize(value: string): string {
 export function MapScreen(_props: Props) {
   const { pins, isLoading: isLoadingPins, addPin } = useMapPins();
   const { location, hasPermission } = useLocation();
+  const insets = useSafeAreaInsets();
 
   const [, setSelectedPin] = useState<MapPin | null>(null);
   const [detailPokemon, setDetailPokemon] = useState<Pokemon | null>(null);
@@ -94,6 +97,7 @@ export function MapScreen(_props: Props) {
     <View style={styles.root}>
       <MapView
         style={styles.map}
+        provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
         initialRegion={initialRegion}
         showsUserLocation={hasPermission}
         onLongPress={handleLongPress}
@@ -103,6 +107,7 @@ export function MapScreen(_props: Props) {
             key={pin.id}
             coordinate={{ latitude: pin.latitude, longitude: pin.longitude }}
             onPress={() => handlePinPress(pin)}
+            tracksViewChanges={false}
           >
             <View style={styles.markerContainer}>
               <Image
@@ -118,13 +123,15 @@ export function MapScreen(_props: Props) {
         ))}
       </MapView>
 
-      <SightingsStats pins={pins} />
+      <View style={[styles.overlayTop, { paddingTop: insets.top }]}>
+        <SightingsStats pins={pins} />
 
-      <TypeFilter
-        pins={pins}
-        selectedType={selectedType}
-        onSelectType={setSelectedType}
-      />
+        <TypeFilter
+          pins={pins}
+          selectedType={selectedType}
+          onSelectType={setSelectedType}
+        />
+      </View>
 
       {isLoadingPins && (
         <View style={styles.loadingOverlay} pointerEvents="none">
@@ -133,7 +140,7 @@ export function MapScreen(_props: Props) {
       )}
 
       {isAddingPin && (
-        <View style={styles.addingIndicator} pointerEvents="none">
+        <View style={[styles.addingIndicator, { top: insets.top + 16 }]} pointerEvents="none">
           <ActivityIndicator size="small" color="#2563eb" />
         </View>
       )}
@@ -183,9 +190,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  overlayTop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+  },
   addingIndicator: {
     position: 'absolute',
-    top: 16,
     right: 16,
     backgroundColor: '#ffffff',
     borderRadius: 999,
