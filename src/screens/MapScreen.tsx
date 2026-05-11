@@ -194,11 +194,6 @@ const styles = StyleSheet.create({
     paddingBottom: 3,
     alignItems: 'center',
     elevation: 3,
-    shadowColor: '#000000',
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    shadowOffset: { width: 0, height: 1 },
-    ...Platform.select({ ios: { overflow: 'hidden' } }),
   },
   markerSprite: {
     width: 40,
