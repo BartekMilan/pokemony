@@ -26,21 +26,20 @@ export function useMapPins(): UseMapPinsResult {
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const pinsRef = useRef<MapPin[]>([]);
-  const isMountedRef = useRef<boolean>(true);
+  const addPinControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
-    isMountedRef.current = true;
     return () => {
-      isMountedRef.current = false;
+      addPinControllerRef.current?.abort();
     };
   }, []);
 
   useEffect(() => {
-    let cancelled = false;
+    const controller = new AbortController();
     (async () => {
       try {
         const raw = await AsyncStorage.getItem(STORAGE_KEYS.mapPins);
-        if (cancelled) return;
+        if (controller.signal.aborted) return;
         if (raw !== null) {
           type StoredPin = Omit<MapPin, 'pokemonTypes'> & {
             pokemonTypes?: string[];
@@ -58,21 +57,25 @@ export function useMapPins(): UseMapPinsResult {
       } catch {
         // Reading stored pins must never crash the app — start with an empty list.
       } finally {
-        if (!cancelled && isMountedRef.current) {
+        if (!controller.signal.aborted) {
           setIsLoading(false);
         }
       }
     })();
     return () => {
-      cancelled = true;
+      controller.abort();
     };
   }, []);
 
   const addPin = useCallback(
     async (latitude: number, longitude: number): Promise<void> => {
+      addPinControllerRef.current?.abort();
+      const controller = new AbortController();
+      addPinControllerRef.current = controller;
+
       try {
         const randomId = pickRandomPokemonId();
-        const pokemon = await getPokemonDetail(randomId);
+        const pokemon = await getPokemonDetail(randomId, controller.signal);
 
         const sprite =
           pokemon.sprites.front_default ??
@@ -91,9 +94,7 @@ export function useMapPins(): UseMapPinsResult {
 
         const next = [...pinsRef.current, newPin];
         pinsRef.current = next;
-        if (isMountedRef.current) {
-          setPins(next);
-        }
+        setPins(next);
 
         try {
           await AsyncStorage.setItem(
@@ -103,7 +104,8 @@ export function useMapPins(): UseMapPinsResult {
         } catch {
           // Persistence is best-effort — UI already reflects the new pin.
         }
-      } catch {
+      } catch (err) {
+        if (err instanceof Error && err.name === 'AbortError') return;
         // Network failures must not crash the app — silently skip the drop.
       }
     },

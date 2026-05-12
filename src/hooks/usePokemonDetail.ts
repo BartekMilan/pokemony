@@ -15,28 +15,27 @@ export function usePokemonDetail(pokemonId: number): UsePokemonDetailResult {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    let cancelled = false;
+    const controller = new AbortController();
     setIsLoading(true);
     setError(null);
     setPokemon(null);
 
     (async () => {
       try {
-        const result = await getPokemonDetail(pokemonId);
-        if (cancelled) return;
+        const result = await getPokemonDetail(pokemonId, controller.signal);
         setPokemon(result);
       } catch (err) {
-        if (cancelled) return;
+        if (err instanceof Error && err.name === 'AbortError') return;
         setError(err instanceof Error ? err.message : 'Failed to load Pokémon');
       } finally {
-        if (!cancelled) {
+        if (!controller.signal.aborted) {
           setIsLoading(false);
         }
       }
     })();
 
     return () => {
-      cancelled = true;
+      controller.abort();
     };
   }, [pokemonId]);
 

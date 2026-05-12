@@ -18,11 +18,11 @@ export function useLocation(): UseLocationResult {
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    let cancelled = false;
+    const controller = new AbortController();
     (async () => {
       try {
         const { status } = await Location.requestForegroundPermissionsAsync();
-        if (cancelled) return;
+        if (controller.signal.aborted) return;
 
         if (status !== 'granted') {
           setHasPermission(false);
@@ -31,7 +31,7 @@ export function useLocation(): UseLocationResult {
 
         setHasPermission(true);
         const position = await Location.getCurrentPositionAsync();
-        if (cancelled) return;
+        if (controller.signal.aborted) return;
 
         setLocation({
           latitude: position.coords.latitude,
@@ -40,14 +40,14 @@ export function useLocation(): UseLocationResult {
       } catch {
         // Permission/location errors must never crash the app — leave defaults.
       } finally {
-        if (!cancelled) {
+        if (!controller.signal.aborted) {
           setIsLoading(false);
         }
       }
     })();
 
     return () => {
-      cancelled = true;
+      controller.abort();
     };
   }, []);
 

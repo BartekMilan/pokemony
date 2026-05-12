@@ -22,32 +22,30 @@ export function usePokemonList(): UsePokemonListResult {
   const [error, setError] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState<boolean>(true);
 
-  const isMountedRef = useRef<boolean>(true);
   const inFlightRef = useRef<boolean>(false);
   const offsetRef = useRef<number>(0);
+  const activeControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
-    isMountedRef.current = true;
     return () => {
-      isMountedRef.current = false;
+      activeControllerRef.current?.abort();
     };
   }, []);
 
-  const loadInitial = useCallback(async (): Promise<void> => {
+  const loadInitial = useCallback(async (signal: AbortSignal): Promise<void> => {
     if (inFlightRef.current) return;
     inFlightRef.current = true;
     try {
       setError(null);
-      const response = await getPokemonList(0);
-      if (!isMountedRef.current) return;
+      const response = await getPokemonList(0, undefined, signal);
       setPokemon(response.results);
       setHasMore(response.next !== null);
       offsetRef.current = response.results.length;
     } catch (err) {
-      if (!isMountedRef.current) return;
+      if (err instanceof Error && err.name === 'AbortError') return;
       setError(err instanceof Error ? err.message : 'Failed to load Pokémon');
     } finally {
-      if (isMountedRef.current) {
+      if (!signal.aborted) {
         setIsLoading(false);
       }
       inFlightRef.current = false;
@@ -55,7 +53,11 @@ export function usePokemonList(): UsePokemonListResult {
   }, []);
 
   useEffect(() => {
-    void loadInitial();
+    const controller = new AbortController();
+    void loadInitial(controller.signal);
+    return () => {
+      controller.abort();
+    };
   }, [loadInitial]);
 
   const loadMore = useCallback((): void => {
@@ -63,20 +65,23 @@ export function usePokemonList(): UsePokemonListResult {
     inFlightRef.current = true;
     setIsLoadingMore(true);
 
+    const controller = new AbortController();
+    activeControllerRef.current = controller;
+    const { signal } = controller;
+
     void (async () => {
       try {
         setError(null);
         const offset = offsetRef.current;
-        const response = await getPokemonList(offset);
-        if (!isMountedRef.current) return;
+        const response = await getPokemonList(offset, undefined, signal);
         setPokemon((prev) => [...prev, ...response.results]);
         setHasMore(response.next !== null);
         offsetRef.current = offset + response.results.length;
       } catch (err) {
-        if (!isMountedRef.current) return;
+        if (err instanceof Error && err.name === 'AbortError') return;
         setError(err instanceof Error ? err.message : 'Failed to load more');
       } finally {
-        if (isMountedRef.current) {
+        if (!signal.aborted) {
           setIsLoadingMore(false);
         }
         inFlightRef.current = false;
@@ -89,19 +94,22 @@ export function usePokemonList(): UsePokemonListResult {
     inFlightRef.current = true;
     setIsRefreshing(true);
 
+    const controller = new AbortController();
+    activeControllerRef.current = controller;
+    const { signal } = controller;
+
     void (async () => {
       try {
         setError(null);
-        const response = await getPokemonList(0);
-        if (!isMountedRef.current) return;
+        const response = await getPokemonList(0, undefined, signal);
         setPokemon(response.results);
         setHasMore(response.next !== null);
         offsetRef.current = response.results.length;
       } catch (err) {
-        if (!isMountedRef.current) return;
+        if (err instanceof Error && err.name === 'AbortError') return;
         setError(err instanceof Error ? err.message : 'Failed to refresh');
       } finally {
-        if (isMountedRef.current) {
+        if (!signal.aborted) {
           setIsRefreshing(false);
           setIsLoading(false);
         }
