@@ -15,7 +15,7 @@ import { useFavoritePokemon } from '../hooks/useFavoritePokemon';
 import { usePokemonList } from '../hooks/usePokemonList';
 import type { ListStackParamList } from '../navigation/types';
 import type { PokemonSummary } from '../types/pokemon';
-import { COLORS } from '../constants/theme';
+import { COLORS, FONT_SIZES, SPACING } from '../constants/theme';
 
 type Props = NativeStackScreenProps<ListStackParamList, 'PokemonList'>;
 
@@ -81,7 +81,7 @@ export function PokemonListScreen({ navigation }: Props) {
       ListFooterComponent={
         isLoadingMore ? (
           <View style={styles.footer}>
-            <ActivityIndicator size="small" color="#6b7280" />
+            <ActivityIndicator size="small" color={COLORS.textSecondary} />
           </View>
         ) : null
       }
@@ -101,31 +101,31 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 24,
+    padding: SPACING.xl,
   },
   errorText: {
-    fontSize: 16,
-    color: '#b91c1c',
+    fontSize: FONT_SIZES.lg,
+    color: COLORS.error,
     textAlign: 'center',
-    marginBottom: 16,
+    marginBottom: SPACING.md,
   },
   retryButton: {
     paddingVertical: 10,
-    paddingHorizontal: 20,
+    paddingHorizontal: SPACING.lg,
     backgroundColor: COLORS.statBar,
     borderRadius: 8,
   },
   retryText: {
     color: COLORS.white,
-    fontSize: 14,
+    fontSize: FONT_SIZES.md,
     fontWeight: '600',
   },
   footer: {
-    paddingVertical: 16,
+    paddingVertical: SPACING.md,
     alignItems: 'center',
   },
   emptyText: {
-    fontSize: 14,
+    fontSize: FONT_SIZES.md,
     color: COLORS.textSecondary,
   },
 });

@@ -37,11 +37,12 @@ function extractIdFromUrl(url: string): number {
 export async function getPokemonList(
   offset: number,
   limit: number = DEFAULT_LIMIT,
+  signal?: AbortSignal,
 ): Promise<PokemonListResponse> {
   const url = `${BASE_URL}/pokemon?limit=${limit}&offset=${offset}`;
 
   try {
-    const response = await fetch(url);
+    const response = await fetch(url, { signal });
     if (!response.ok) {
       throw new PokeApiError(
         `PokéAPI request failed with status ${response.status}`,
@@ -68,6 +69,9 @@ export async function getPokemonList(
     if (err instanceof PokeApiError) {
       throw err;
     }
+    if (err instanceof Error && err.name === 'AbortError') {
+      throw err;
+    }
     throw new PokeApiError(
       `Network error fetching Pokémon list`,
       null,
@@ -76,11 +80,11 @@ export async function getPokemonList(
   }
 }
 
-export async function getPokemonDetail(id: number): Promise<Pokemon> {
+export async function getPokemonDetail(id: number, signal?: AbortSignal): Promise<Pokemon> {
   const url = `${BASE_URL}/pokemon/${id}`;
 
   try {
-    const response = await fetch(url);
+    const response = await fetch(url, { signal });
     if (!response.ok) {
       throw new PokeApiError(
         `PokéAPI request failed with status ${response.status}`,
@@ -91,6 +95,9 @@ export async function getPokemonDetail(id: number): Promise<Pokemon> {
     return (await response.json()) as Pokemon;
   } catch (err) {
     if (err instanceof PokeApiError) {
+      throw err;
+    }
+    if (err instanceof Error && err.name === 'AbortError') {
       throw err;
     }
     throw new PokeApiError(

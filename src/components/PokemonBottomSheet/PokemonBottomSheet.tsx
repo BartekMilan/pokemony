@@ -44,10 +44,8 @@ export function PokemonBottomSheet({ pokemon, onClose }: Props) {
       backgroundStyle={styles.background}
     >
       <BottomSheetView style={styles.content}>
-        {pokemon !== null ? (
+        {pokemon !== null && (
           <PokemonDetail pokemon={pokemon} actionButton={null} />
-        ) : (
-          <></>
         )}
       </BottomSheetView>
     </BottomSheet>

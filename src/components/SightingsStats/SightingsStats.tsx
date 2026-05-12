@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 
 import type { MapPin } from '../../types/map';
-import { COLORS } from '../../constants/theme';
+import { BORDER_RADIUS, COLORS, FONT_SIZES, SPACING } from '../../constants/theme';
 
 type Props = {
   pins: MapPin[];
@@ -65,11 +65,11 @@ export function SightingsStats({ pins }: Props) {
 const styles = StyleSheet.create({
   card: {
     alignSelf: 'flex-start',
-    marginTop: 16,
-    marginLeft: 16,
+    marginTop: SPACING.md,
+    marginLeft: SPACING.md,
     maxWidth: 220,
     backgroundColor: COLORS.white,
-    borderRadius: 12,
+    borderRadius: BORDER_RADIUS.md,
     padding: 12,
     shadowColor: '#000000',
     shadowOpacity: 0.15,
@@ -78,13 +78,13 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   summaryRow: {
-    fontSize: 13,
+    fontSize: FONT_SIZES.sm,
     fontWeight: '600',
     color: COLORS.textPrimary,
   },
   mostSpotted: {
     fontSize: 11,
     color: COLORS.textSecondary,
-    marginTop: 4,
+    marginTop: SPACING.xs,
   },
 });

@@ -12,7 +12,7 @@ import { PokemonDetail } from '../components/PokemonDetail';
 import { useFavoritePokemon } from '../hooks/useFavoritePokemon';
 import { usePokemonDetail } from '../hooks/usePokemonDetail';
 import type { ListStackParamList } from '../navigation/types';
-import { COLORS } from '../constants/theme';
+import { BORDER_RADIUS, COLORS, FONT_SIZES, SPACING } from '../constants/theme';
 
 type Props = NativeStackScreenProps<ListStackParamList, 'PokemonDetail'>;
 
@@ -79,18 +79,18 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 24,
+    padding: SPACING.xl,
   },
   errorText: {
-    fontSize: 16,
-    color: '#b91c1c',
+    fontSize: FONT_SIZES.lg,
+    color: COLORS.error,
     textAlign: 'center',
   },
   button: {
     width: '100%',
     paddingVertical: 14,
     backgroundColor: COLORS.statBar,
-    borderRadius: 12,
+    borderRadius: BORDER_RADIUS.md,
     alignItems: 'center',
   },
   buttonDisabled: {
@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: COLORS.white,
-    fontSize: 16,
+    fontSize: FONT_SIZES.lg,
     fontWeight: '700',
   },
 });

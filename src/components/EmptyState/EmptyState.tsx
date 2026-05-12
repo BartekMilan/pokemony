@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { COLORS } from '../../constants/theme';
+import { COLORS, FONT_SIZES, SPACING } from '../../constants/theme';
 
 type Props = {
   icon?: string;
@@ -32,22 +32,22 @@ const styles = StyleSheet.create({
   },
   icon: {
     fontSize: 64,
-    marginBottom: 16,
+    marginBottom: SPACING.md,
   },
   title: {
     fontSize: 20,
     fontWeight: '700',
     color: COLORS.textPrimary,
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: SPACING.sm,
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: FONT_SIZES.md,
     color: COLORS.textSecondary,
     textAlign: 'center',
     lineHeight: 20,
   },
   action: {
-    marginTop: 20,
+    marginTop: SPACING.lg,
   },
 });

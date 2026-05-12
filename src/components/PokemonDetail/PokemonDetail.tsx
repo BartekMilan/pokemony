@@ -15,7 +15,7 @@ import {
   MAX_STAT,
   TYPE_COLORS,
 } from '../../constants/pokemon';
-import { COLORS } from '../../constants/theme';
+import { BORDER_RADIUS, COLORS, FONT_SIZES, SPACING } from '../../constants/theme';
 
 type Props = {
   pokemon: Pokemon;
@@ -117,48 +117,48 @@ export function PokemonDetail({ pokemon, actionButton }: Props) {
 
 const styles = StyleSheet.create({
   container: {
-    padding: 20,
-    paddingBottom: 40,
+    padding: SPACING.lg,
+    paddingBottom: SPACING.xxl,
     alignItems: 'center',
   },
   artworkWrapper: {
     width: 240,
     height: 240,
-    marginBottom: 16,
+    marginBottom: SPACING.md,
   },
   artworkPlaceholder: {
     ...StyleSheet.absoluteFillObject,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: COLORS.backgroundSubtle,
-    borderRadius: 16,
+    borderRadius: BORDER_RADIUS.lg,
   },
   artwork: {
     width: 240,
     height: 240,
   },
   id: {
-    fontSize: 14,
+    fontSize: FONT_SIZES.md,
     color: COLORS.textSecondary,
     fontWeight: '600',
-    marginBottom: 8,
+    marginBottom: SPACING.sm,
   },
   typeRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
-    marginBottom: 20,
+    marginBottom: SPACING.lg,
   },
   typeBadge: {
     paddingVertical: 6,
     paddingHorizontal: 14,
-    borderRadius: 999,
-    marginHorizontal: 4,
+    borderRadius: BORDER_RADIUS.pill,
+    marginHorizontal: SPACING.xs,
     marginVertical: 2,
   },
   typeText: {
     color: COLORS.white,
-    fontSize: 13,
+    fontSize: FONT_SIZES.sm,
     fontWeight: '700',
     textTransform: 'capitalize',
   },
@@ -166,29 +166,29 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     width: '100%',
-    marginBottom: 24,
+    marginBottom: SPACING.xl,
   },
   metaItem: {
     alignItems: 'center',
   },
   metaLabel: {
-    fontSize: 12,
+    fontSize: FONT_SIZES.xs,
     color: COLORS.textSecondary,
-    marginBottom: 4,
+    marginBottom: SPACING.xs,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   metaValue: {
-    fontSize: 18,
+    fontSize: FONT_SIZES.xl,
     color: COLORS.textPrimary,
     fontWeight: '600',
   },
   statsSection: {
     width: '100%',
-    marginBottom: 24,
+    marginBottom: SPACING.xl,
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: FONT_SIZES.lg,
     fontWeight: '700',
     color: COLORS.textPrimary,
     marginBottom: 12,
@@ -196,27 +196,27 @@ const styles = StyleSheet.create({
   statRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: SPACING.sm,
   },
   statName: {
     width: 110,
-    fontSize: 13,
+    fontSize: FONT_SIZES.sm,
     color: COLORS.textTertiary,
     textTransform: 'capitalize',
   },
   statValue: {
     width: 36,
-    fontSize: 13,
+    fontSize: FONT_SIZES.sm,
     fontWeight: '600',
     color: COLORS.textPrimary,
     textAlign: 'right',
-    marginRight: 8,
+    marginRight: SPACING.sm,
   },
   statBarTrack: {
     flex: 1,
     height: 8,
     backgroundColor: COLORS.border,
-    borderRadius: 4,
+    borderRadius: BORDER_RADIUS.sm,
     overflow: 'hidden',
   },
   statBarFill: {

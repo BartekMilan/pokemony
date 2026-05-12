@@ -8,6 +8,7 @@ export const COLORS = {
   statBar: '#2563eb',
   loadingSpinner: '#9ca3af',
   divider: '#d1d5db',
+  error: '#b91c1c',
 };
 
 export const SPACING = {

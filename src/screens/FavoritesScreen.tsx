@@ -12,7 +12,7 @@ import { EmptyState } from '../components/EmptyState';
 import { PokemonDetail } from '../components/PokemonDetail';
 import { useFavoritePokemon } from '../hooks/useFavoritePokemon';
 import type { TabParamList } from '../navigation/types';
-import { COLORS } from '../constants/theme';
+import { COLORS, FONT_SIZES, SPACING } from '../constants/theme';
 
 type Props = BottomTabScreenProps<TabParamList, 'Favorites'>;
 
@@ -66,11 +66,11 @@ const styles = StyleSheet.create({
   headerButton: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    marginRight: 8,
+    marginRight: SPACING.sm,
   },
   headerButtonText: {
-    color: '#b91c1c',
-    fontSize: 14,
+    color: COLORS.error,
+    fontSize: FONT_SIZES.md,
     fontWeight: '600',
   },
 });

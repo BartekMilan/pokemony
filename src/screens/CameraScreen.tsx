@@ -2,6 +2,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 
 import type { TabParamList } from '../navigation/types';
+import { FONT_SIZES } from '../constants/theme';
 
 type Props = BottomTabScreenProps<TabParamList, 'Camera'>;
 
@@ -20,6 +21,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   text: {
-    fontSize: 18,
+    fontSize: FONT_SIZES.xl,
   },
 });

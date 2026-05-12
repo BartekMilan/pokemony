@@ -1,5 +1,5 @@
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
-import { memo, useCallback, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -21,7 +21,7 @@ import type { TabParamList } from '../navigation/types';
 import { getPokemonDetail } from '../services/pokeapi';
 import type { MapPin } from '../types/map';
 import type { Pokemon } from '../types/pokemon';
-import { COLORS } from '../constants/theme';
+import { BORDER_RADIUS, COLORS, SPACING } from '../constants/theme';
 
 const DEFAULT_REGION: Region = {
   latitude: 52.2297,
@@ -79,10 +79,16 @@ export function MapScreen(_props: Props) {
   const { location, hasPermission } = useLocation();
   const insets = useSafeAreaInsets();
 
-  const [, setSelectedPin] = useState<MapPin | null>(null);
   const [detailPokemon, setDetailPokemon] = useState<Pokemon | null>(null);
   const [isAddingPin, setIsAddingPin] = useState<boolean>(false);
   const [selectedType, setSelectedType] = useState<string | null>(null);
+  const detailControllerRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    return () => {
+      detailControllerRef.current?.abort();
+    };
+  }, []);
 
   const visiblePins =
     selectedType === null
@@ -115,20 +121,23 @@ export function MapScreen(_props: Props) {
   );
 
   const handlePinPress = useCallback((pin: MapPin): void => {
-    setSelectedPin(pin);
+    detailControllerRef.current?.abort();
+    const controller = new AbortController();
+    detailControllerRef.current = controller;
     void (async () => {
       try {
-        const pokemon = await getPokemonDetail(pin.pokemonId);
+        const pokemon = await getPokemonDetail(pin.pokemonId, controller.signal);
         setDetailPokemon(pokemon);
-      } catch {
+      } catch (err) {
+        if (err instanceof Error && err.name === 'AbortError') return;
         // Network failures must not crash the app — leave the sheet closed.
       }
     })();
   }, []);
 
   const handleSheetClose = useCallback((): void => {
+    detailControllerRef.current?.abort();
     setDetailPokemon(null);
-    setSelectedPin(null);
   }, []);
 
   return (
@@ -166,7 +175,7 @@ export function MapScreen(_props: Props) {
       )}
 
       {isAddingPin && (
-        <View style={[styles.addingIndicator, { top: insets.top + 16 }]} pointerEvents="none">
+        <View style={[styles.addingIndicator, { top: insets.top + SPACING.md }]} pointerEvents="none">
           <ActivityIndicator size="small" color={COLORS.statBar} />
         </View>
       )}
@@ -191,7 +200,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: COLORS.white,
     paddingHorizontal: 6,
-    paddingTop: 4,
+    paddingTop: SPACING.xs,
     paddingBottom: 3,
     alignItems: 'center',
     elevation: 3,
@@ -222,10 +231,10 @@ const styles = StyleSheet.create({
   },
   addingIndicator: {
     position: 'absolute',
-    right: 16,
+    right: SPACING.md,
     backgroundColor: COLORS.white,
-    borderRadius: 999,
-    paddingVertical: 8,
+    borderRadius: BORDER_RADIUS.pill,
+    paddingVertical: SPACING.sm,
     paddingHorizontal: 12,
     shadowColor: '#000000',
     shadowOpacity: 0.15,

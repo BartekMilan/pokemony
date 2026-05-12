@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 
 import type { PokemonSummary } from '../../types/pokemon';
-import { COLORS } from '../../constants/theme';
+import { COLORS, FONT_SIZES, SPACING } from '../../constants/theme';
 
 const SPRITE_BASE_URL =
   'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon';
@@ -67,7 +67,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingHorizontal: SPACING.md,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: COLORS.border,
     backgroundColor: COLORS.white,
@@ -78,7 +78,7 @@ const styles = StyleSheet.create({
   imageWrapper: {
     width: 64,
     height: 64,
-    marginRight: 16,
+    marginRight: SPACING.md,
     borderRadius: 8,
     overflow: 'hidden',
   },
@@ -96,7 +96,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   id: {
-    fontSize: 12,
+    fontSize: FONT_SIZES.xs,
     color: COLORS.textSecondary,
     fontWeight: '600',
   },
@@ -105,12 +105,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   name: {
-    fontSize: 16,
+    fontSize: FONT_SIZES.lg,
     fontWeight: '600',
     color: COLORS.textPrimary,
   },
   star: {
     marginLeft: 6,
-    fontSize: 14,
+    fontSize: FONT_SIZES.md,
   },
 });

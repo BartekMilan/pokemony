@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 
 import { TYPE_COLORS } from '../../constants/pokemon';
-import { COLORS } from '../../constants/theme';
+import { BORDER_RADIUS, COLORS, FONT_SIZES, SPACING } from '../../constants/theme';
 import type { MapPin } from '../../types/map';
 
 const ALL_LABEL = 'All';
@@ -93,16 +93,16 @@ export function TypeFilter({ pins, selectedType, onSelectType }: Props) {
 const styles = StyleSheet.create({
   wrapper: {
     marginTop: 12,
-    marginHorizontal: 16,
+    marginHorizontal: SPACING.md,
   },
   scrollContent: {
-    paddingRight: 8,
+    paddingRight: SPACING.sm,
   },
   chip: {
     paddingVertical: 6,
     paddingHorizontal: 12,
-    borderRadius: 999,
-    marginRight: 8,
+    borderRadius: BORDER_RADIUS.pill,
+    marginRight: SPACING.sm,
   },
   chipInactive: {
     backgroundColor: COLORS.white,
@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
   },
   chipText: {
-    fontSize: 12,
+    fontSize: FONT_SIZES.xs,
     fontWeight: '700',
   },
   chipTextActive: {
