@@ -23,12 +23,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.tempapp",
-      "config": {
-        "googleMaps": {
-          "apiKey": "AIzaSyDO6OajJtSbqyx0yXlCfKCQYDVFu5zNB9k"
-        }
-      }
+      "package": "com.anonymous.tempapp"
     },
     "web": {
       "favicon": "./assets/favicon.png"
