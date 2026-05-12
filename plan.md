@@ -80,7 +80,7 @@ Delete the `android.config.googleMaps` block from `app.json`. It is now supplied
 
 ---
 
-## Step 2 — State Management: Refactor `useFavoritePokemon` to React Context
+## Step 2 — State Management: Refactor `useFavoritePokemon` to React Context [ZROBIONE]
 
 **Files affected:** new `src/contexts/FavoritePokemonContext.tsx`, `src/hooks/useFavoritePokemon.ts` (rewritten), `App.tsx`
 
