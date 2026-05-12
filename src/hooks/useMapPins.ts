@@ -3,13 +3,12 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { getPokemonDetail } from '../services/pokeapi';
 import type { MapPin } from '../types/map';
-
-const MAP_PINS_STORAGE_KEY = '@map_pins';
-const MIN_POKEMON_ID = 1;
-const MAX_POKEMON_ID = 151;
-
-const FALLBACK_SPRITE =
-  'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/0.png';
+import {
+  FALLBACK_SPRITE,
+  MAX_POKEMON_ID,
+  MIN_POKEMON_ID,
+} from '../constants/pokemon';
+import { STORAGE_KEYS } from '../constants/storage';
 
 type UseMapPinsResult = {
   pins: MapPin[];
@@ -40,7 +39,7 @@ export function useMapPins(): UseMapPinsResult {
     let cancelled = false;
     (async () => {
       try {
-        const raw = await AsyncStorage.getItem(MAP_PINS_STORAGE_KEY);
+        const raw = await AsyncStorage.getItem(STORAGE_KEYS.mapPins);
         if (cancelled) return;
         if (raw !== null) {
           type StoredPin = Omit<MapPin, 'pokemonTypes'> & {
@@ -98,7 +97,7 @@ export function useMapPins(): UseMapPinsResult {
 
         try {
           await AsyncStorage.setItem(
-            MAP_PINS_STORAGE_KEY,
+            STORAGE_KEYS.mapPins,
             JSON.stringify(next),
           );
         } catch {

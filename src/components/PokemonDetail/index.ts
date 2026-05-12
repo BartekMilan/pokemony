@@ -1,1 +1,2 @@
-export { PokemonDetail, TYPE_COLORS } from './PokemonDetail';
+export { PokemonDetail } from './PokemonDetail';
+export { TYPE_COLORS } from '../../constants/pokemon';

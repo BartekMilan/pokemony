@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 
 import type { MapPin } from '../../types/map';
+import { COLORS } from '../../constants/theme';
 
 type Props = {
   pins: MapPin[];
@@ -67,7 +68,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
     marginLeft: 16,
     maxWidth: 220,
-    backgroundColor: '#ffffff',
+    backgroundColor: COLORS.white,
     borderRadius: 12,
     padding: 12,
     shadowColor: '#000000',
@@ -79,11 +80,11 @@ const styles = StyleSheet.create({
   summaryRow: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#111827',
+    color: COLORS.textPrimary,
   },
   mostSpotted: {
     fontSize: 11,
-    color: '#6b7280',
+    color: COLORS.textSecondary,
     marginTop: 4,
   },
 });

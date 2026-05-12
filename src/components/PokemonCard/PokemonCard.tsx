@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 
 import type { PokemonSummary } from '../../types/pokemon';
+import { COLORS } from '../../constants/theme';
 
 const SPRITE_BASE_URL =
   'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon';
@@ -40,7 +41,7 @@ export function PokemonCard({ pokemon, onPress, isFavorite }: Props) {
       <View style={styles.imageWrapper}>
         {!isImageLoaded && (
           <View style={styles.placeholder}>
-            <ActivityIndicator size="small" color="#9ca3af" />
+            <ActivityIndicator size="small" color={COLORS.loadingSpinner} />
           </View>
         )}
         <Image
@@ -56,7 +57,7 @@ export function PokemonCard({ pokemon, onPress, isFavorite }: Props) {
           {isFavorite && <Text style={styles.star}>⭐</Text>}
         </View>
       </View>
-      <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
+      <Ionicons name="chevron-forward" size={20} color={COLORS.loadingSpinner} />
     </Pressable>
   );
 }
@@ -68,11 +69,11 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#e5e7eb',
-    backgroundColor: '#ffffff',
+    borderBottomColor: COLORS.border,
+    backgroundColor: COLORS.white,
   },
   pressed: {
-    backgroundColor: '#f3f4f6',
+    backgroundColor: COLORS.backgroundSubtle,
   },
   imageWrapper: {
     width: 64,
@@ -83,7 +84,7 @@ const styles = StyleSheet.create({
   },
   placeholder: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#e5e7eb',
+    backgroundColor: COLORS.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -96,7 +97,7 @@ const styles = StyleSheet.create({
   },
   id: {
     fontSize: 12,
-    color: '#6b7280',
+    color: COLORS.textSecondary,
     fontWeight: '600',
   },
   nameRow: {
@@ -106,7 +107,7 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#111827',
+    color: COLORS.textPrimary,
   },
   star: {
     marginLeft: 6,

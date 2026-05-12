@@ -12,6 +12,7 @@ import { EmptyState } from '../components/EmptyState';
 import { PokemonDetail } from '../components/PokemonDetail';
 import { useFavoritePokemon } from '../hooks/useFavoritePokemon';
 import type { TabParamList } from '../navigation/types';
+import { COLORS } from '../constants/theme';
 
 type Props = BottomTabScreenProps<TabParamList, 'Favorites'>;
 
@@ -38,7 +39,7 @@ export function FavoritesScreen({ navigation }: Props) {
   if (isLoading) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#6b7280" />
+        <ActivityIndicator size="large" color={COLORS.textSecondary} />
       </View>
     );
   }

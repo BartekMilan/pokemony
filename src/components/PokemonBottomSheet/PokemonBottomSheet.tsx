@@ -2,6 +2,8 @@ import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { StyleSheet } from 'react-native';
 
+import { COLORS } from '../../constants/theme';
+
 import { PokemonDetail } from '../PokemonDetail';
 import type { Pokemon } from '../../types/pokemon';
 
@@ -54,13 +56,13 @@ export function PokemonBottomSheet({ pokemon, onClose }: Props) {
 
 const styles = StyleSheet.create({
   background: {
-    backgroundColor: '#ffffff',
+    backgroundColor: COLORS.white,
   },
   handleIndicator: {
     width: 40,
     height: 5,
     borderRadius: 999,
-    backgroundColor: '#d1d5db',
+    backgroundColor: COLORS.divider,
   },
   content: {
     flex: 1,

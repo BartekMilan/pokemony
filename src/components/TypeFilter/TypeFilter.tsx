@@ -7,11 +7,11 @@ import {
   View,
 } from 'react-native';
 
-import { TYPE_COLORS } from '../PokemonDetail';
+import { TYPE_COLORS } from '../../constants/pokemon';
+import { COLORS } from '../../constants/theme';
 import type { MapPin } from '../../types/map';
 
 const ALL_LABEL = 'All';
-const FALLBACK_TYPE_COLOR = '#6b7280';
 
 type Props = {
   pins: MapPin[];
@@ -46,7 +46,7 @@ export function TypeFilter({ pins, selectedType, onSelectType }: Props) {
           style={[
             styles.chip,
             isAllActive
-              ? { backgroundColor: FALLBACK_TYPE_COLOR }
+              ? { backgroundColor: COLORS.textSecondary }
               : styles.chipInactive,
           ]}
         >
@@ -62,7 +62,7 @@ export function TypeFilter({ pins, selectedType, onSelectType }: Props) {
 
         {types.map((type) => {
           const isActive = selectedType === type;
-          const activeColor = TYPE_COLORS[type] ?? FALLBACK_TYPE_COLOR;
+          const activeColor = TYPE_COLORS[type] ?? COLORS.textSecondary;
           return (
             <Pressable
               key={type}
@@ -105,18 +105,18 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   chipInactive: {
-    backgroundColor: '#ffffff',
+    backgroundColor: COLORS.white,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: COLORS.border,
   },
   chipText: {
     fontSize: 12,
     fontWeight: '700',
   },
   chipTextActive: {
-    color: '#ffffff',
+    color: COLORS.white,
   },
   chipTextInactive: {
-    color: '#374151',
+    color: COLORS.textTertiary,
   },
 });

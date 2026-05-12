@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { COLORS } from '../../constants/theme';
+
 type Props = {
   icon?: string;
   title: string;
@@ -35,13 +37,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#111827',
+    color: COLORS.textPrimary,
     textAlign: 'center',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 14,
-    color: '#6b7280',
+    color: COLORS.textSecondary,
     textAlign: 'center',
     lineHeight: 20,
   },

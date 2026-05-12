@@ -4,8 +4,7 @@ import type {
   PokemonSummary,
 } from '../types/pokemon';
 
-const BASE_URL = 'https://pokeapi.co/api/v2';
-const DEFAULT_LIMIT = 20;
+import { BASE_URL, DEFAULT_LIMIT } from '../constants/api';
 
 type RawListItem = { name: string; url: string };
 

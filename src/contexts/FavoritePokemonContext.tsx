@@ -8,8 +8,7 @@ import {
 } from 'react';
 
 import type { Pokemon } from '../types/pokemon';
-
-const FAVORITE_STORAGE_KEY = '@favorite_pokemon';
+import { STORAGE_KEYS } from '../constants/storage';
 
 type FavoritePokemonContextValue = {
   favorite: Pokemon | null;
@@ -31,7 +30,7 @@ export function FavoritePokemonProvider({ children }: Props): React.ReactElement
     let cancelled = false;
     (async () => {
       try {
-        const raw = await AsyncStorage.getItem(FAVORITE_STORAGE_KEY);
+        const raw = await AsyncStorage.getItem(STORAGE_KEYS.favoritePokemon);
         if (cancelled) return;
         if (raw !== null) {
           setFav(JSON.parse(raw) as Pokemon);
@@ -52,7 +51,7 @@ export function FavoritePokemonProvider({ children }: Props): React.ReactElement
   const setFavorite = useCallback(async (pokemon: Pokemon): Promise<void> => {
     setFav(pokemon);
     try {
-      await AsyncStorage.setItem(FAVORITE_STORAGE_KEY, JSON.stringify(pokemon));
+      await AsyncStorage.setItem(STORAGE_KEYS.favoritePokemon, JSON.stringify(pokemon));
     } catch {
       // Persistence is best-effort — UI already reflects the optimistic update.
     }
@@ -61,7 +60,7 @@ export function FavoritePokemonProvider({ children }: Props): React.ReactElement
   const clearFavorite = useCallback(async (): Promise<void> => {
     setFav(null);
     try {
-      await AsyncStorage.removeItem(FAVORITE_STORAGE_KEY);
+      await AsyncStorage.removeItem(STORAGE_KEYS.favoritePokemon);
     } catch {
       // Best-effort.
     }

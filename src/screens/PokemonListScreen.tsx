@@ -15,6 +15,7 @@ import { useFavoritePokemon } from '../hooks/useFavoritePokemon';
 import { usePokemonList } from '../hooks/usePokemonList';
 import type { ListStackParamList } from '../navigation/types';
 import type { PokemonSummary } from '../types/pokemon';
+import { COLORS } from '../constants/theme';
 
 type Props = NativeStackScreenProps<ListStackParamList, 'PokemonList'>;
 
@@ -51,7 +52,7 @@ export function PokemonListScreen({ navigation }: Props) {
   if (isLoading) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#6b7280" />
+        <ActivityIndicator size="large" color={COLORS.textSecondary} />
       </View>
     );
   }
@@ -111,11 +112,11 @@ const styles = StyleSheet.create({
   retryButton: {
     paddingVertical: 10,
     paddingHorizontal: 20,
-    backgroundColor: '#2563eb',
+    backgroundColor: COLORS.statBar,
     borderRadius: 8,
   },
   retryText: {
-    color: '#ffffff',
+    color: COLORS.white,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -125,6 +126,6 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 14,
-    color: '#6b7280',
+    color: COLORS.textSecondary,
   },
 });

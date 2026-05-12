@@ -123,7 +123,7 @@ Add the Provider immediately inside `GestureHandlerRootView`, wrapping everythin
 
 ---
 
-## Step 3 — Constants Extraction
+## Step 3 — Constants Extraction [ZROBIONE]
 
 **Files affected:** new `src/constants/api.ts`, new `src/constants/pokemon.ts`, new `src/constants/theme.ts`, new `src/constants/storage.ts`, `src/services/pokeapi.ts`, `src/hooks/useFavoritePokemon.ts`, `src/hooks/useMapPins.ts`, and all components/screens listed in step 3.3.
 

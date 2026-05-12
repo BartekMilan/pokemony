@@ -21,6 +21,7 @@ import type { TabParamList } from '../navigation/types';
 import { getPokemonDetail } from '../services/pokeapi';
 import type { MapPin } from '../types/map';
 import type { Pokemon } from '../types/pokemon';
+import { COLORS } from '../constants/theme';
 
 const DEFAULT_REGION: Region = {
   latitude: 52.2297,
@@ -160,13 +161,13 @@ export function MapScreen(_props: Props) {
 
       {isLoadingPins && (
         <View style={styles.loadingOverlay} pointerEvents="none">
-          <ActivityIndicator size="large" color="#2563eb" />
+          <ActivityIndicator size="large" color={COLORS.statBar} />
         </View>
       )}
 
       {isAddingPin && (
         <View style={[styles.addingIndicator, { top: insets.top + 16 }]} pointerEvents="none">
-          <ActivityIndicator size="small" color="#2563eb" />
+          <ActivityIndicator size="small" color={COLORS.statBar} />
         </View>
       )}
 
@@ -188,7 +189,7 @@ const styles = StyleSheet.create({
   markerCard: {
     width: 52,
     borderRadius: 8,
-    backgroundColor: '#ffffff',
+    backgroundColor: COLORS.white,
     paddingHorizontal: 6,
     paddingTop: 4,
     paddingBottom: 3,
@@ -198,12 +199,12 @@ const styles = StyleSheet.create({
   markerSprite: {
     width: 40,
     height: 40,
-    backgroundColor: '#ffffff',
+    backgroundColor: COLORS.white,
   },
   markerLabel: {
     fontSize: 9,
     fontWeight: '700',
-    color: '#111827',
+    color: COLORS.textPrimary,
     textTransform: 'capitalize',
     marginTop: 2,
   },
@@ -222,7 +223,7 @@ const styles = StyleSheet.create({
   addingIndicator: {
     position: 'absolute',
     right: 16,
-    backgroundColor: '#ffffff',
+    backgroundColor: COLORS.white,
     borderRadius: 999,
     paddingVertical: 8,
     paddingHorizontal: 12,

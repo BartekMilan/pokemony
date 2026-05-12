@@ -10,30 +10,12 @@ import {
 } from 'react-native';
 
 import type { Pokemon } from '../../types/pokemon';
-
-export const TYPE_COLORS: Record<string, string> = {
-  normal: '#A8A77A',
-  fire: '#EE8130',
-  water: '#6390F0',
-  electric: '#F7D02C',
-  grass: '#7AC74C',
-  ice: '#96D9D6',
-  fighting: '#C22E28',
-  poison: '#A33EA1',
-  ground: '#E2BF65',
-  flying: '#A98FF3',
-  psychic: '#F95587',
-  bug: '#A6B91A',
-  rock: '#B6A136',
-  ghost: '#735797',
-  dragon: '#6F35FC',
-  dark: '#705746',
-  steel: '#B7B7CE',
-  fairy: '#D685AD',
-};
-
-const FALLBACK_TYPE_COLOR = '#9ca3af';
-const MAX_STAT = 255;
+import {
+  FALLBACK_TYPE_COLOR,
+  MAX_STAT,
+  TYPE_COLORS,
+} from '../../constants/pokemon';
+import { COLORS } from '../../constants/theme';
 
 type Props = {
   pokemon: Pokemon;
@@ -63,7 +45,7 @@ export function PokemonDetail({ pokemon, actionButton }: Props) {
       <View style={styles.artworkWrapper}>
         {!isImageLoaded && (
           <View style={styles.artworkPlaceholder}>
-            <ActivityIndicator size="large" color="#9ca3af" />
+            <ActivityIndicator size="large" color={COLORS.loadingSpinner} />
           </View>
         )}
         {artworkUrl !== null && (
@@ -148,7 +130,7 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#f3f4f6',
+    backgroundColor: COLORS.backgroundSubtle,
     borderRadius: 16,
   },
   artwork: {
@@ -157,7 +139,7 @@ const styles = StyleSheet.create({
   },
   id: {
     fontSize: 14,
-    color: '#6b7280',
+    color: COLORS.textSecondary,
     fontWeight: '600',
     marginBottom: 8,
   },
@@ -175,7 +157,7 @@ const styles = StyleSheet.create({
     marginVertical: 2,
   },
   typeText: {
-    color: '#ffffff',
+    color: COLORS.white,
     fontSize: 13,
     fontWeight: '700',
     textTransform: 'capitalize',
@@ -191,14 +173,14 @@ const styles = StyleSheet.create({
   },
   metaLabel: {
     fontSize: 12,
-    color: '#6b7280',
+    color: COLORS.textSecondary,
     marginBottom: 4,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   metaValue: {
     fontSize: 18,
-    color: '#111827',
+    color: COLORS.textPrimary,
     fontWeight: '600',
   },
   statsSection: {
@@ -208,7 +190,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#111827',
+    color: COLORS.textPrimary,
     marginBottom: 12,
   },
   statRow: {
@@ -219,26 +201,26 @@ const styles = StyleSheet.create({
   statName: {
     width: 110,
     fontSize: 13,
-    color: '#374151',
+    color: COLORS.textTertiary,
     textTransform: 'capitalize',
   },
   statValue: {
     width: 36,
     fontSize: 13,
     fontWeight: '600',
-    color: '#111827',
+    color: COLORS.textPrimary,
     textAlign: 'right',
     marginRight: 8,
   },
   statBarTrack: {
     flex: 1,
     height: 8,
-    backgroundColor: '#e5e7eb',
+    backgroundColor: COLORS.border,
     borderRadius: 4,
     overflow: 'hidden',
   },
   statBarFill: {
     height: '100%',
-    backgroundColor: '#2563eb',
+    backgroundColor: COLORS.statBar,
   },
 });

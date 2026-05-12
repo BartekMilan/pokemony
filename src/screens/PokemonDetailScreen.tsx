@@ -12,6 +12,7 @@ import { PokemonDetail } from '../components/PokemonDetail';
 import { useFavoritePokemon } from '../hooks/useFavoritePokemon';
 import { usePokemonDetail } from '../hooks/usePokemonDetail';
 import type { ListStackParamList } from '../navigation/types';
+import { COLORS } from '../constants/theme';
 
 type Props = NativeStackScreenProps<ListStackParamList, 'PokemonDetail'>;
 
@@ -40,7 +41,7 @@ export function PokemonDetailScreen({ route, navigation }: Props) {
   if (isLoading) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#6b7280" />
+        <ActivityIndicator size="large" color={COLORS.textSecondary} />
       </View>
     );
   }
@@ -88,15 +89,15 @@ const styles = StyleSheet.create({
   button: {
     width: '100%',
     paddingVertical: 14,
-    backgroundColor: '#2563eb',
+    backgroundColor: COLORS.statBar,
     borderRadius: 12,
     alignItems: 'center',
   },
   buttonDisabled: {
-    backgroundColor: '#9ca3af',
+    backgroundColor: COLORS.loadingSpinner,
   },
   buttonText: {
-    color: '#ffffff',
+    color: COLORS.white,
     fontSize: 16,
     fontWeight: '700',
   },
