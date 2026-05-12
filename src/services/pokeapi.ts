@@ -6,6 +6,17 @@ import type {
 
 import { BASE_URL, DEFAULT_LIMIT } from '../constants/api';
 
+export class PokeApiError extends Error {
+  constructor(
+    message: string,
+    public readonly status: number | null,
+    public readonly url: string,
+  ) {
+    super(message);
+    this.name = 'PokeApiError';
+  }
+}
+
 type RawListItem = { name: string; url: string };
 
 type RawListResponse = {
@@ -32,8 +43,10 @@ export async function getPokemonList(
   try {
     const response = await fetch(url);
     if (!response.ok) {
-      throw new Error(
-        `PokéAPI request failed with status ${response.status} (${url})`,
+      throw new PokeApiError(
+        `PokéAPI request failed with status ${response.status}`,
+        response.status,
+        url,
       );
     }
 
@@ -52,10 +65,14 @@ export async function getPokemonList(
       results,
     };
   } catch (err) {
-    if (err instanceof Error) {
+    if (err instanceof PokeApiError) {
       throw err;
     }
-    throw new Error(`Failed to fetch Pokémon list (${url})`);
+    throw new PokeApiError(
+      `Network error fetching Pokémon list`,
+      null,
+      url,
+    );
   }
 }
 
@@ -65,15 +82,21 @@ export async function getPokemonDetail(id: number): Promise<Pokemon> {
   try {
     const response = await fetch(url);
     if (!response.ok) {
-      throw new Error(
-        `PokéAPI request failed with status ${response.status} (${url})`,
+      throw new PokeApiError(
+        `PokéAPI request failed with status ${response.status}`,
+        response.status,
+        url,
       );
     }
     return (await response.json()) as Pokemon;
   } catch (err) {
-    if (err instanceof Error) {
+    if (err instanceof PokeApiError) {
       throw err;
     }
-    throw new Error(`Failed to fetch Pokémon ${id}`);
+    throw new PokeApiError(
+      `Network error fetching Pokémon ${id}`,
+      null,
+      url,
+    );
   }
 }
