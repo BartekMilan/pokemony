@@ -23,12 +23,20 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.tempapp"
+      "package": "com.anonymous.tempapp",
+      "minSdkVersion": 26
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
+      [
+        "react-native-vision-camera",
+        {
+          "cameraPermissionText": "Allow temp-app to use your camera to overlay your favorite Pokémon on photos.",
+          "enableFrameProcessors": true
+        }
+      ],
       [
         "expo-location",
         {

@@ -1,291 +1,277 @@
-# Refactoring Plan — Security, State Management, Constants, Error Handling
+# Plan: "Crazy Vision Camera" tab (Android-only, VC v4 + live face tracking, risk accepted)
 
 ## Context
 
-The codebase is a React Native / Expo 52 Pokédex app in good shape overall, but has four categories of issues:
-1. A live Google Maps API key is hardcoded in `app.json` and committed to git.
-2. `useFavoritePokemon` uses module-level mutable variables and a hand-rolled pub/sub pattern — a React anti-pattern that breaks Fast Refresh and makes testing unreliable.
-3. Domain constants (`TYPE_COLORS`, `MAX_STAT`, `BASE_URL`, `DEFAULT_LIMIT`, etc.) are scattered across components and services instead of living in `src/constants/`.
-4. Error handling in `pokeapi.ts` uses generic `Error` objects, making it hard for callers to distinguish API errors from network errors.
+The `Camera` tab in the Pokédex app (Expo SDK 54.0.33, RN 0.81.5, React 19.1.0, New Architecture, `react-native-worklets@0.8.3`, `react-native-reanimated@4.3.0`) is currently a stub (`src/screens/CameraScreen.tsx` lines 1–25). The spec requires:
+
+1. Live camera preview
+2. AI/ML face detection that overlays the user's favorite Pokémon on the detected face (forehead) **— live, on the preview**
+3. Capture the augmented image and save to the device's photo library
+4. Drop a map pin at the GPS location of capture
+
+**Locked-in decisions (risk accepted by user):**
+
+- **Platform scope:** **Android-only.** iOS short-circuits to an "Android only" notice.
+- **Camera + ML stack:** `react-native-vision-camera@^4.7.3` + `react-native-vision-camera-face-detector@^1.4.1` (luicfrr) + `react-native-worklets-core@^1.6.2`. **Live frame-processor face tracking is the spec's most important feature and must be included** — the user has explicitly accepted the risks documented below in exchange for it.
+- **No-favorite UX:** Block capture, show `EmptyState` with CTA navigating to the List tab.
+- **GPS timing:** Fresh `Location.getCurrentPositionAsync({ accuracy: Balanced })` at capture, in parallel with `takePhoto()`. Do NOT reuse the `useLocation` snapshot.
+- **MediaLibrary permission:** Runtime `MediaLibrary.requestPermissionsAsync(true)` (write-only) inside the capture pipeline.
+- **`PhotoComposerView` placement:** Always mounted in the React tree, NEVER `display: none`, NEVER conditionally unmounted. Pushed off-screen via `{ position: 'absolute', left: -10000, top: 0, opacity: 0 }`, with `collapsable={false}` on the snapshot target.
+
+## Accepted risks (from validation pass)
+
+The user reviewed the validation findings and chose this path anyway. The risks remain real:
+
+- **VC v4 is archived** ([margelo/react-native-vision-camera-v4-snapshot](https://github.com/mrousavy/react-native-vision-camera)). No upstream patches will ship. PR #3604 (RN 0.81 Kotlin fixes) will likely never merge — our `patch-package` patches are permanent.
+- **VC v4's runtime behavior under New Architecture (Fabric) is unverified.** Issue #2614 ("Migrate to new-arch") was never closed in v4; that work became V5. SDK 54 cannot disable the New Architecture. If v4 boots but misbehaves under Fabric, we have no upstream fix path.
+- **`react-native-vision-camera-face-detector@1.4.1`** was last tested with RN 0.79.5 + worklets-core 1.6.2 + reanimated 3.9. We force reanimated to 4.3 via npm `overrides`; this may cause runtime crashes if VC v4 calls into reanimated internals (mitigated by routing all worklet code through `worklets-core` instead).
+- **Both worklets packages coexist** (`react-native-worklets` for reanimated 4, `react-native-worklets-core` for VC v4's frame processor). Different package names, no install-time conflict, but babel plugin order is load-bearing.
+
+If any of these surface as a build/runtime issue, the fallback is a small, well-defined pivot to the **VC V5 + post-capture ML** plan (preserved in the git history of this file).
 
 ---
 
-## Step 1 — Security: Move the Google Maps API Key Out of Source [ZROBIONE]
-
-**Files affected:** `.gitignore`, `app.json`, new `app.config.ts`, new `.env`, new `.env.example`
-
-### 1.0 — Revoke the exposed key immediately
-
-The key `AIzaSyDO6OajJtSbqyx0yXlCfKCQYDVFu5zNB9k` is already in git history and must be considered compromised. Before doing anything else:
-
-1. Open **Google Cloud Console → APIs & Services → Credentials**.
-2. Find the key and click **Regenerate key** (or delete it and create a new one).
-3. Copy the new key — it will be the value placed in `.env` in step 1.2.
-
-Moving the old key to `.env` without revoking it does **not** fix the security issue.
-
-### 1.1 — Fix `.gitignore`
-
-The current entry `.env*.local` does **not** match `.env`. Add a plain `.env` line:
+## Architecture overview
 
 ```
-# local env files
-.env
-.env*.local
+CameraScreen (orchestrator)
+├── Platform.OS === 'ios' → <UnsupportedPlatformNotice/>
+├── favorite === null      → <EmptyState … onCta={navigate('List')}/>
+├── permissions not granted → <PermissionGate … />
+└── ready
+    ├── <Camera> (vision-camera v4)
+    │   └── frameProcessor: useFaceDetector() → writes face bounds to a sharedValue
+    ├── <AnimatedPokemonOverlay/> (reanimated useAnimatedStyle reads sharedValue → live forehead tracking)
+    ├── <PhotoComposerView/> (mounted, off-screen at left: -10000, ref retained)
+    └── capture button → useCaptureCrazyPhoto()
+        ├── await MediaLibrary.requestPermissionsAsync(true)
+        ├── Promise.all([camera.takePhoto(), Location.getCurrentPositionAsync(Balanced)])
+        ├── runOnJS read of latest face bounds (deterministic snapshot)
+        ├── feed PhotoComposerView state → wait both image onLoads (onReady)
+        ├── captureRef(composerRef, { format: 'jpg', quality: 0.92, result: 'tmpfile' })
+        ├── MediaLibrary.saveToLibraryAsync(finalUri)
+        └── addPin(lat, lng, favorite)
 ```
 
-### 1.2 — Create `.env`
-
-Create `.env` in the project root (never committed). Use the **new** key from step 1.0:
-
-```
-GOOGLE_MAPS_API_KEY=<new_key_from_google_cloud_console>
-```
-
-Also create `.env.example` (committed) as onboarding documentation:
-
-```
-GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
-```
-
-### 1.3 — Create `app.config.ts`
-
-Expo SDK 49+ automatically loads `.env` before evaluating this file, so `process.env` works without installing `dotenv`. The file merges with `app.json` (this file wins on conflicts).
-
-```typescript
-import type { ConfigContext, ExpoConfig } from 'expo/config';
-
-export default ({ config }: ConfigContext): ExpoConfig => ({
-  ...config,
-  android: {
-    ...config.android,
-    config: {
-      googleMaps: {
-        apiKey: process.env.GOOGLE_MAPS_API_KEY ?? '',
-      },
-    },
-  },
-  ios: {
-    ...config.ios,
-    config: {
-      googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY ?? '',
-    },
-  },
-});
-```
-
-### 1.4 — Remove the hardcoded key from `app.json`
-
-Delete the `android.config.googleMaps` block from `app.json`. It is now supplied exclusively by `app.config.ts`.
+Composition uses the *last known* face bounds at the moment of capture (read via `runOnJS` from `sharedValue.value`). If no face is currently tracked, the sprite is placed at the photo center.
 
 ---
 
-## Step 2 — State Management: Refactor `useFavoritePokemon` to React Context [ZROBIONE]
+## Files to MODIFY
 
-**Files affected:** new `src/contexts/FavoritePokemonContext.tsx`, `src/hooks/useFavoritePokemon.ts` (rewritten), `App.tsx`
+| Path | Change |
+|---|---|
+| `package.json` | **Dependencies:** add `react-native-vision-camera@^4.7.3`, `react-native-vision-camera-face-detector@^1.4.1`, `react-native-worklets-core@^1.6.2`, `react-native-view-shot@^4`, `expo-image-manipulator`. **`overrides` block:** `"react-native-reanimated": "^4.3.0"` — forces reanimated 4 across the dep graph and silences VC v4's pin to 3.9.0. **`devDependencies`:** add `patch-package`. **`scripts`:** add `"postinstall": "patch-package"`. |
+| `babel.config.js` | Add `react-native-worklets-core/plugin` to the plugins array **BEFORE** `react-native-reanimated/plugin` (reanimated's plugin must remain last). Result: `plugins: ['react-native-worklets-core/plugin', 'react-native-reanimated/plugin']`. |
+| `app.json` | Add `react-native-vision-camera` config-plugin block with `cameraPermissionText` and `enableFrameProcessors: true`. Documentation parity (bare workflow won't auto-apply). |
+| `android/app/src/main/AndroidManifest.xml` | Add `<uses-permission android:name="android.permission.CAMERA"/>` and `<uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>` (Android 13+). Confirm `android:hardwareAccelerated="true"` on `<application>` (required by VC). |
+| `ios/tempapp/Info.plist` | **No change.** iOS is out of scope. |
+| `src/hooks/useMapPins.ts` | Extend `addPin(latitude, longitude, pokemon?: Pokemon): Promise<void>`. When `pokemon` is supplied, skip `getPokemonDetail`/random ID and build `MapPin` directly. Export `buildPinFromPokemon(pokemon, lat, lng): MapPin`. Non-breaking. |
+| `src/screens/CameraScreen.tsx` | Full rewrite (see Step 8). |
+| `CLAUDE.md` | Update Tech-Stack: `Camera: react-native-vision-camera v4 (Android-only) + react-native-vision-camera-face-detector + react-native-worklets-core`. Note iOS unsupported. |
 
-### Why the current code is an anti-pattern
+## Files to CREATE
 
-`useFavoritePokemon.ts` holds three module-level variables (`cachedFavorite`, `isHydrated`, `listeners`) that persist across component mounts and are never reset by React. This:
-- Silently survives Fast Refresh (stale state after a hot reload)
-- Makes unit tests share state between test cases unless modules are manually reset
-- Re-implements React Context by hand, without its lifecycle guarantees
-
-### 2.1 — Create `src/contexts/FavoritePokemonContext.tsx`
-
-The Provider owns all state and the AsyncStorage hydration. It exposes the same public API the hook currently exposes (`favorite`, `isLoading`, `setFavorite`, `clearFavorite`).
-
-Key implementation notes:
-- Use `useState<Pokemon | null>(null)` and `useState<boolean>(true)` — no module-level variables.
-- Run the hydration `useEffect` inside the Provider (runs once when the app mounts).
-- `setFavorite` and `clearFavorite` are `useCallback` functions that update React state then persist to AsyncStorage (same optimistic pattern as today).
-- Import `STORAGE_KEYS` from `src/constants/storage.ts` (created in step 3.4) instead of using a raw string.
-- Export two things: `FavoritePokemonProvider` and `useFavoritePokemon`.
-- `useFavoritePokemon` throws a descriptive error if called outside the Provider (defensive guard).
-
-### 2.2 — Rewrite `src/hooks/useFavoritePokemon.ts`
-
-The file becomes a one-line re-export pointing to the context hook:
-
-```typescript
-export { useFavoritePokemon } from '../contexts/FavoritePokemonContext';
-```
-
-The module-level `cachedFavorite`, `isHydrated`, `listeners`, and `notify` are gone.
-
-### 2.3 — Wrap `App.tsx` with `<FavoritePokemonProvider>`
-
-Add the Provider immediately inside `GestureHandlerRootView`, wrapping everything else. No change to any screen or component — they continue calling `useFavoritePokemon()` as before.
-
-### Note on `useMapPins`
-
-`useMapPins` is not an anti-pattern. It uses local `useState` + `useRef` and is consumed only by `MapScreen`. No refactoring needed for state management.
+| Path | Purpose |
+|---|---|
+| `patches/react-native-vision-camera+4.7.3.patch` | Two Kotlin compile fixes generated via `patch-package`: (a) `CameraViewManager.kt` — `getExportedCustomDirectEventTypeConstants()` returns `Map<String, Any>?` instead of `MutableMap<String, Any>?`; (b) `CameraViewModule.kt` — change `val activity = currentActivity as? PermissionAwareActivity` to `val activity = reactApplicationContext.currentActivity as? PermissionAwareActivity`. Tracked upstream in PR #3604. |
+| `src/hooks/useCameraPermission.ts` | Wraps VC v4's `Camera.requestCameraPermission()` / `Camera.getCameraPermissionStatus()` into `{ hasPermission, isLoading, request }` (mirroring `useLocation`'s shape). |
+| `src/hooks/useCaptureCrazyPhoto.ts` | Orchestrator hook. Takes `cameraRef`, `composerRef`, `favorite`, and `lastFaceBounds: SharedValue<FaceBounds \| null>`. Exposes `{ capture(): Promise<void>, status, error }`. Runs runtime-permission → capture → composite → save → addPin. |
+| `src/services/photoComposer.ts` | Pure service (no React imports). `composePhotoWithSprite({ composerRef, width, height }): Promise<string>` — calls `captureRef(composerRef, …)`, returns a tmpfile URI. Does NOT instantiate the composer view. |
+| `src/components/CrazyCameraView/CrazyCameraView.tsx` + `index.ts` | Active capture view. Mounts `<Camera>` with `useCameraDevice('front')` (default) / `useCameraDevice('back')` (flip toggle). Wires `useFaceDetector({ performanceMode: 'fast', landmarkMode: 'all', minFaceSize: 0.15 })` + `useFrameProcessor` to write face bounds into a worklets-core shared value. Renders the on-preview `<AnimatedPokemonOverlay/>`. |
+| `src/components/AnimatedPokemonOverlay/AnimatedPokemonOverlay.tsx` + `index.ts` | Reads `sharedFaceBounds` via reanimated `useAnimatedStyle`; positions an `<Animated.Image/>` at the forehead anchor (mid-eye point raised by 0.6× eye-to-nose distance, width ≈ 1.5× eye distance). Uses `withTiming(value, { duration: 80 })` for smoothing. Falls back to centered when bounds are null. |
+| `src/components/PhotoComposerView/PhotoComposerView.tsx` + `index.ts` | Off-screen snapshot view. Props: `{ photoUri, spriteUri, faceBounds, width, height, onReady }`. Tracks `photoLoaded` + `spriteLoaded` and calls `onReady()` exactly once when both flip true. **Container style locked to `{ position: 'absolute', left: -10000, top: 0, width, height, opacity: 0 }`** with `collapsable={false}` on the snapshot-target inner `<View>`. Always mounted in `CameraScreen`'s tree. |
+| `src/components/UnsupportedPlatformNotice/UnsupportedPlatformNotice.tsx` + `index.ts` | Renders centered "This feature is currently available only on Android." Uses theme tokens. |
+| `src/components/EmptyState/EmptyState.tsx` | Already exists per CLAUDE.md — reuse for "no favorite". Extend with optional `actionLabel`/`onAction` props if needed. |
 
 ---
 
-## Step 3 — Constants Extraction [ZROBIONE]
+## Step-by-step implementation order
 
-**Files affected:** new `src/constants/api.ts`, new `src/constants/pokemon.ts`, new `src/constants/theme.ts`, new `src/constants/storage.ts`, `src/services/pokeapi.ts`, `src/hooks/useFavoritePokemon.ts`, `src/hooks/useMapPins.ts`, and all components/screens listed in step 3.3.
+### Step 1 — Native deps, patches, and Android config (gate-keep build first)
 
-### 3.1 — Create `src/constants/api.ts`
+1. `npm install react-native-vision-camera@^4.7.3 react-native-vision-camera-face-detector@^1.4.1 react-native-worklets-core@^1.6.2 react-native-view-shot@^4 expo-image-manipulator`.
+2. `npm install -D patch-package`.
+3. Add to `package.json`:
+   - `scripts.postinstall`: `"patch-package"`.
+   - `overrides`:
+     ```json
+     "overrides": {
+       "react-native-reanimated": "^4.3.0"
+     }
+     ```
+4. Update `babel.config.js`:
+   ```js
+   module.exports = function (api) {
+     api.cache(true);
+     return {
+       presets: ['babel-preset-expo'],
+       plugins: [
+         'react-native-worklets-core/plugin',
+         'react-native-reanimated/plugin',
+       ],
+     };
+   };
+   ```
+   Plugin order is load-bearing: `reanimated/plugin` MUST be last.
+5. Edit `node_modules/react-native-vision-camera/android/src/main/java/com/mrousavy/camera/CameraViewManager.kt`:
+   - Change `override fun getExportedCustomDirectEventTypeConstants(): MutableMap<String, Any>?` → `override fun getExportedCustomDirectEventTypeConstants(): Map<String, Any>?`.
+6. Edit `node_modules/react-native-vision-camera/android/src/main/java/com/mrousavy/camera/CameraViewModule.kt`:
+   - Replace `val activity = currentActivity as? PermissionAwareActivity` with `val activity = reactApplicationContext.currentActivity as? PermissionAwareActivity`.
+7. Run `npx patch-package react-native-vision-camera` to produce `patches/react-native-vision-camera+4.7.3.patch`. Commit this file.
+8. Edit `android/app/src/main/AndroidManifest.xml`:
+   - Add `<uses-permission android:name="android.permission.CAMERA"/>`.
+   - Add `<uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>`.
+   - Confirm `android:hardwareAccelerated="true"` on `<application>`.
+9. Add `react-native-vision-camera` plugin block to `app.json` for documentation parity:
+   ```json
+   ["react-native-vision-camera", {
+     "cameraPermissionText": "Allow temp-app to use your camera to overlay your favorite Pokémon on photos.",
+     "enableFrameProcessors": true
+   }]
+   ```
+10. **Verify Android build before any feature work:** `npx expo run:android`. The app should boot and the existing CameraScreen stub should render. **Do not proceed until Android builds AND opens to the CameraScreen stub without crashing.** This validates the patches + babel ordering + native compile. If anything fails here, diagnose now — it'll be much harder once features are wired up.
+11. Do NOT run `cd ios && pod install`. iOS is out of scope.
 
-Move from `pokeapi.ts`:
+### Step 2 — Extend `useMapPins`
 
-```typescript
-export const BASE_URL = 'https://pokeapi.co/api/v2';
-export const DEFAULT_LIMIT = 20;
-```
+1. Add `buildPinFromPokemon(pokemon: Pokemon, lat: number, lng: number): MapPin`. Sprite via `front_default → other['official-artwork'].front_default → FALLBACK_SPRITE`; types via `pokemon.types.map(t => t.type.name)`.
+2. Change `addPin` signature to `(latitude, longitude, pokemon?: Pokemon)`. When `pokemon` supplied: skip `getPokemonDetail`, use `buildPinFromPokemon`, persist, return.
+3. Smoke-check `MapScreen` long-press still drops a random Pokémon (parity).
 
-Update imports in `src/services/pokeapi.ts`.
+### Step 3 — Permissions hook
 
-### 3.2 — Create `src/constants/pokemon.ts`
+1. Create `useCameraPermission` wrapping `Camera.requestCameraPermission()` / `Camera.getCameraPermissionStatus()`. Return `{ hasPermission, isLoading, request }`.
 
-Move from `PokemonDetail.tsx` and `useMapPins.ts`:
+### Step 4 — Live camera + frame-processor face detection (Android path)
 
-```typescript
-export const TYPE_COLORS: Record<string, string> = { /* existing 18 entries */ };
-export const FALLBACK_TYPE_COLOR = '#9ca3af';
-export const MAX_STAT = 255;
-export const MIN_POKEMON_ID = 1;
-export const MAX_POKEMON_ID = 151;
-export const FALLBACK_SPRITE =
-  'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/0.png';
-```
+1. Build `CrazyCameraView`:
+   - `const device = useCameraDevice(isFront ? 'front' : 'back')`; default `isFront = true`.
+   - Import `useFaceDetector` from `react-native-vision-camera-face-detector`. `const { detectFaces } = useFaceDetector({ performanceMode: 'fast', landmarkMode: 'all', minFaceSize: 0.15 })`.
+   - Import `useSharedValue` **from `react-native-worklets-core`** (not reanimated — VC v4's frame processor runs on worklets-core's runtime). `const sharedBounds = useSharedValue<FaceBounds | null>(null)`.
+   - `const frameProcessor = useFrameProcessor((frame) => { 'worklet'; const faces = detectFaces(frame); sharedBounds.value = faces[0]?.bounds ?? null; }, [detectFaces])`.
+   - Render `<Camera ref={cameraRef} device={device} isActive frameProcessor={frameProcessor} photo style={StyleSheet.absoluteFill}/>`.
+   - Overlay `<AnimatedPokemonOverlay sharedBounds={sharedBounds} spriteUri={favorite.sprite}/>`.
+   - Bottom UI: capture button + camera-flip button.
+2. **Bridging worklets-core ↔ reanimated for the overlay animation:** The frame processor's `sharedBounds` is a worklets-core shared value. The overlay uses reanimated's `useAnimatedStyle`, which reads reanimated shared values. Bridge by reading `sharedBounds.value` periodically and writing into a reanimated `useSharedValue`:
+   - In `AnimatedPokemonOverlay`, create `const reaBounds = useSharedValue<FaceBounds | null>(null)` (reanimated).
+   - Inside `frameProcessor` (worklet context), `runOnJS(setReaBounds)(faces[0]?.bounds ?? null)` is too slow; instead use `Worklets.createRunOnJS` once at mount and call it from the frame processor.
+   - Or simpler: use reanimated v4's `useFrameCallback` to mirror `sharedBounds.value → reaBounds.value` once per frame.
+   - **Alternative (recommended for simplicity):** skip reanimated for the overlay and use RN core `Animated.View` driven by `requestAnimationFrame` that reads `sharedBounds.value` and animates `Animated.Value`s. Slightly less smooth but avoids the cross-runtime bridge entirely.
+3. The overlay computes forehead anchor: mid-eye point raised by 0.6× eye-to-nose distance; width = 1.5× eye distance. Falls back to screen-center when bounds are null.
 
-Update imports in `PokemonDetail.tsx` (`TYPE_COLORS`, `FALLBACK_TYPE_COLOR`, `MAX_STAT`) and `useMapPins.ts` (`MIN_POKEMON_ID`, `MAX_POKEMON_ID`, `FALLBACK_SPRITE`).
+### Step 5 — Capture pipeline (`useCaptureCrazyPhoto`)
 
-### 3.3 — Create `src/constants/theme.ts` and apply to ALL affected files
+1. `capture()`:
+   - `const perm = await MediaLibrary.requestPermissionsAsync(true);` If `perm.status !== 'granted'` → set status `error`, abort.
+   - Snapshot the worklets-core `sharedBounds.value` into a plain JS object `lastBounds` (since this is read on JS thread, direct `.value` access is allowed for worklets-core).
+   - `const [photo, position] = await Promise.all([cameraRef.current.takePhoto({ qualityPrioritization: 'balanced', flash: 'off' }), Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced })]);`
+   - `let photoUri = 'file://' + photo.path;`
+   - If `photo.orientation` indicates rotation, normalize via `expo-image-manipulator`.
+   - Lift `{ photoUri, faceBounds: lastBounds }` to `CameraScreen` state (consumed by `PhotoComposerView`). Await the `onReady` callback (both image `onLoad`s fired).
+   - `const finalUri = await composePhotoWithSprite({ composerRef, width: COMPOSER_WIDTH, height: COMPOSER_HEIGHT });`
+   - `await MediaLibrary.saveToLibraryAsync(finalUri);`
+   - `await addPin(position.coords.latitude, position.coords.longitude, favorite);`
+2. State machine: `idle | requestingPerm | capturing | composing | saving | done | error`. Capture button disabled outside `idle`. Errors surfaced via `Alert.alert`.
 
-Centralise UI colour tokens currently scattered as hex literals in `StyleSheet.create` blocks:
+### Step 6 — Composition (`photoComposer.ts` + `PhotoComposerView`)
 
-```typescript
-export const COLORS = {
-  textPrimary:      '#111827',
-  textSecondary:    '#6b7280',
-  textTertiary:     '#374151',
-  white:            '#ffffff',
-  backgroundSubtle: '#f3f4f6',
-  border:           '#e5e7eb',
-  statBar:          '#2563eb',
-  loadingSpinner:   '#9ca3af',
-  divider:          '#d1d5db',
-};
+1. `PhotoComposerView` is **always mounted** in `CameraScreen`'s tree. Container style is locked to `{ position: 'absolute', left: -10000, top: 0, width: COMPOSER_WIDTH, height: COMPOSER_HEIGHT, opacity: 0 }`. Inner snapshot target uses `collapsable={false}`.
+2. Component tracks `photoLoaded` + `spriteLoaded`; calls `onReady()` exactly once when both flip true. Resets the flags whenever `photoUri` changes.
+3. `COMPOSER_WIDTH = 1080`; `COMPOSER_HEIGHT` derived from `photo.width/height` for matching aspect.
+4. `composePhotoWithSprite` is the pure service: `captureRef(ref, { format: 'jpg', quality: 0.92, result: 'tmpfile', width, height })`. No view instantiation inside the service.
 
-export const SPACING = {
-  xs: 4, sm: 8, md: 16, lg: 20, xl: 24, xxl: 40,
-};
+### Step 7 — Screen orchestration (`CameraScreen.tsx`)
 
-export const FONT_SIZES = {
-  xs: 12, sm: 13, md: 14, lg: 16, xl: 18,
-};
-
-export const BORDER_RADIUS = {
-  sm: 4, md: 12, lg: 16, pill: 999,
-};
-```
-
-Replace bare hex strings and magic numbers in **every** file that uses them:
-
-| File | Token(s) used |
-|------|--------------|
-| `src/components/EmptyState/EmptyState.tsx` | `textSecondary`, `textPrimary` |
-| `src/components/PokemonCard/PokemonCard.tsx` | `textPrimary`, `textSecondary`, `backgroundSubtle`, `border` |
-| `src/components/PokemonBottomSheet/PokemonBottomSheet.tsx` | `textPrimary`, `textSecondary`, `backgroundSubtle`, `border`, `white` |
-| `src/components/PokemonDetail/PokemonDetail.tsx` | `textPrimary`, `textSecondary`, `textTertiary`, `backgroundSubtle`, `border`, `statBar`, `loadingSpinner`, `divider` |
-| `src/components/SightingsStats/SightingsStats.tsx` | `textPrimary`, `textSecondary`, `backgroundSubtle`, `border` |
-| `src/components/TypeFilter/TypeFilter.tsx` | `textPrimary`, `textSecondary`, `backgroundSubtle`, `border`, `white` |
-| `src/screens/FavoritesScreen.tsx` | `textPrimary`, `textSecondary`, `backgroundSubtle` |
-| `src/screens/MapScreen.tsx` | `textPrimary`, `textSecondary`, `white` |
-| `src/screens/PokemonDetailScreen.tsx` | `textPrimary`, `backgroundSubtle`, `white` |
-| `src/screens/PokemonListScreen.tsx` | `textPrimary`, `textSecondary`, `backgroundSubtle` |
-
-### 3.4 — Create `src/constants/storage.ts`
-
-Centralise the AsyncStorage key strings that are currently defined as local constants in two separate hooks:
-
-```typescript
-export const STORAGE_KEYS = {
-  favoritePokemon: '@favorite_pokemon',
-  mapPins:         '@map_pins',
-} as const;
-```
-
-Update `src/hooks/useFavoritePokemon.ts` (and the new `FavoritePokemonContext.tsx`) to import `STORAGE_KEYS.favoritePokemon` instead of the local `FAVORITE_STORAGE_KEY` string. Update `src/hooks/useMapPins.ts` to import `STORAGE_KEYS.mapPins` instead of the local `MAP_PINS_STORAGE_KEY` string.
-
----
-
-## Step 4 — Error Handling: Custom `PokeApiError` in `pokeapi.ts`
-
-**Files affected:** `src/services/pokeapi.ts`
-
-### 4.1 — Define `PokeApiError`
-
-Add a custom error class at the top of `pokeapi.ts`:
-
-```typescript
-export class PokeApiError extends Error {
-  constructor(
-    public readonly statusCode: number,
-    public readonly endpoint: string,
-  ) {
-    super(`PokéAPI responded with HTTP ${statusCode} at ${endpoint}`);
-    this.name = 'PokeApiError';
-  }
-}
-```
-
-### 4.2 — Update `getPokemonList` and `getPokemonDetail`
-
-Replace:
-```typescript
-throw new Error(`PokéAPI request failed with status ${response.status} (${url})`);
-```
-With:
-```typescript
-throw new PokeApiError(response.status, url);
-```
-
-This lets callers (`usePokemonList`, `useMapPins`) narrow the error type with `instanceof PokeApiError` and surface a meaningful message to the user.
-
-## Step 5 — Modern Async Cleanup: Replace `isMountedRef` and `cancelled` flags with `AbortController`
-
-**Files affected:** `src/services/pokeapi.ts`, `src/hooks/usePokemonList.ts`, `src/hooks/usePokemonDetail.ts`, `src/hooks/useMapPins.ts`
-
-### 5.1 — Update `pokeapi.ts` to accept `AbortSignal`
-
-Modify `getPokemonList` and `getPokemonDetail` to accept an optional `signal?: AbortSignal` parameter and pass it to the `fetch` options:
-
-```typescript
-export async function getPokemonDetail(id: number, signal?: AbortSignal): Promise<Pokemon> {
-  const url = `${BASE_URL}/pokemon/${id}`;
-  const response = await fetch(url, { signal });
-  // ... rest of the implementation
-}
+1. Top-level branch: `Platform.OS === 'ios'` → `<UnsupportedPlatformNotice/>`. No VC code paths run.
+2. Android flow:
+   - Read `favorite` from `useFavoritePokemon()`.
+   - Read `{ hasPermission, request }` from `useCameraPermission()`.
+   - Branches:
+     - `favorite === null` → `<EmptyState title="No favorite Pokémon yet" description="Pick one to start AR mode" actionLabel="Browse Pokémon" onAction={() => navigation.navigate('List', { screen: 'PokemonList' })}/>`.
+     - `hasPermission === false` → `<PermissionGate onGrant={request}/>`.
+     - Otherwise → render BOTH the on-screen `<CrazyCameraView/>` AND the off-screen `<PhotoComposerView ref={composerRef} {...composerProps} onReady={onComposerReady}/>`.
+3. Screen orchestrates hooks and components only — no service calls.
 
 ---
 
-## Verification
+## Reused existing code (do NOT duplicate)
 
-After all steps, verify with:
+- `useFavoritePokemon` — `src/hooks/useFavoritePokemon.ts` (re-exports from `src/contexts/FavoritePokemonContext.tsx`). Read `favorite`, no writes.
+- `useLocation` — `src/hooks/useLocation.ts`. Not used by the capture flow (fresh fix at capture). Optional for a current-location badge.
+- `useMapPins` — `src/hooks/useMapPins.ts`. Use the extended `addPin(lat, lng, pokemon)`.
+- `STORAGE_KEYS`, `FALLBACK_SPRITE` — `src/constants/storage.ts`, `src/constants/pokemon.ts`. Used in `buildPinFromPokemon`.
+- `COLORS`, `SPACING`, `FONT_SIZES`, `BORDER_RADIUS` — `src/constants/theme.ts`. All new component styles use these tokens (no hex literals).
+- `EmptyState` — `src/components/EmptyState/`. Reuse, extend props if needed.
+- `MapPin` — `src/types/map.ts`. Do not redefine.
 
-```bash
-# Type check — must pass with zero errors
-npx tsc --noEmit
+---
 
-# Lint — must pass with zero warnings
-npm run lint
+## Risks & mitigations (with fallbacks if a step fails)
 
-# Format check
-npm run format:check
+| Risk | Mitigation / Fallback |
+|---|---|
+| VC v4 Kotlin compile errors on RN 0.81 | `patches/react-native-vision-camera+4.7.3.patch` applied by `patch-package` postinstall. **If patches fail to compile:** check that the Kotlin file paths in `node_modules` match what's referenced in the patch (VC's internal layout can shift between minor versions). |
+| VC v4 archived — no upstream fixes | Accepted. **If a future v4 patch is needed:** consider the forks `digital-industry-group/react-native-vision-camera-v4` or pin a working snapshot version. |
+| VC v4 runtime behavior on Fabric/New Arch unverified | Step 1.10 gate: boot the unchanged stub app first. **If boot crashes under New Arch:** revisit the V5 + post-capture ML plan (preserved in git history of this file). |
+| `react-native-vision-camera-face-detector` v1.4.1 tested only on RN 0.79.5 | The plugin's bridge surface is unchanged in RN 0.81. **If frame processor doesn't emit faces on a real device:** check logcat for native errors; consider patching the plugin's `build.gradle` to declare a compatible MLKit version explicitly. |
+| `overrides` to reanimated 4.3 may surface a runtime crash inside VC v4's internal reanimated calls | We route all worklet code through `worklets-core` (Step 4 uses `useSharedValue` from `react-native-worklets-core`, not reanimated). VC v4 only calls reanimated if you opt into its reanimated frame processor path; we don't. **If a startup crash references reanimated internals:** the override may need to be tightened to `react-native-vision-camera` direct deps only via a more targeted `npm overrides` block scoping. |
+| MediaLibrary `saveToLibraryAsync` silently no-ops if permission denied | Pipeline calls `MediaLibrary.requestPermissionsAsync(true)` first; aborts on `status !== 'granted'`. |
+| `PhotoComposerView` snapshot blank | Always mounted, off-screen at `left: -10000`, `collapsable={false}`. Snapshot gated on explicit `onReady` callback. Reset on every `photoUri` change. |
+| Worklets-core ↔ reanimated bridging in `AnimatedPokemonOverlay` | Recommended simplification: use RN core `Animated` driven by a JS-thread interval reading `sharedBounds.value`. Slightly less smooth but avoids cross-runtime issues. |
+| Android `takePhoto()` orientation | Normalize via `expo-image-manipulator` before composition. |
+| `expo prebuild` could clobber AndroidManifest edits | Plan forbids prebuild. All native edits manual. |
+| Stale GPS | Fresh fix via `Location.getCurrentPositionAsync` at capture. |
+| Opening Camera on iOS | `Platform.OS === 'ios'` branch renders `<UnsupportedPlatformNotice/>`. |
 
-# Runtime — confirm the app starts, maps load, favorites persist across reloads
-npx expo start
-```
+---
 
-Manual smoke tests:
-1. App launches and loads the Pokémon list.
-2. Navigate to a Pokémon detail and set it as favourite — it appears in the Favourites tab immediately.
-3. Restart the app (kill + reopen) — favourite persists.
-4. Open the Map tab, long-press to drop a pin — a Pokémon marker appears.
-5. Android map renders (confirms the env-var API key is wired correctly).
-6. iOS map renders (confirms iOS `googleMapsApiKey` is wired correctly).
+## Critical files to read before implementing
+
+- `src/screens/CameraScreen.tsx` (current stub)
+- `src/hooks/useMapPins.ts` (extension target)
+- `src/hooks/useLocation.ts` (shape to mirror in `useCameraPermission`)
+- `src/contexts/FavoritePokemonContext.tsx` (favorite data shape)
+- `src/types/map.ts` and `src/types/pokemon.ts`
+- `src/screens/MapScreen.tsx` (verify new pins render correctly)
+- `src/components/EmptyState/EmptyState.tsx` (confirm props before reusing)
+- `app.json`, `babel.config.js`, `android/app/src/main/AndroidManifest.xml`
+- `node_modules/react-native-vision-camera/android/src/main/java/com/mrousavy/camera/CameraViewManager.kt`
+- `node_modules/react-native-vision-camera/android/src/main/java/com/mrousavy/camera/CameraViewModule.kt`
+
+---
+
+## Verification (Android device — emulator may not have camera support)
+
+After each step, run the appropriate subset:
+
+1. **After Step 1 (native deps + patches):**
+   - `ls patches/` shows `react-native-vision-camera+4.7.3.patch`.
+   - `npm ls react-native-reanimated` resolves to `^4.3.0` everywhere (no `3.9.0` in tree).
+   - `npx expo run:android` boots without build errors; the existing app navigates to CameraScreen stub without crashing.
+   - `adb shell dumpsys package com.anonymous.tempapp | grep permission` shows `CAMERA` listed.
+
+2. **After Step 2 (`useMapPins` extension):**
+   - `npx tsc --noEmit` passes.
+   - Smoke test: long-press on Map tab still drops a random pin (parity).
+
+3. **After Steps 3–4 (live camera + face overlay):**
+   - On a real Android device, open Camera tab.
+   - Live preview shows; Pokémon sprite tracks the user's face when detected; sits centered when none.
+   - Tap camera flip → switches front/back.
+   - No favorite set → `EmptyState`; tapping CTA navigates to List tab.
+   - Camera permission denied → `PermissionGate`; "Grant" re-prompts.
+   - On iOS simulator → `<UnsupportedPlatformNotice/>`; no VC code runs.
+
+4. **After Steps 5–7 (capture + save):**
+   - Tap capture → MediaLibrary permission prompt (first time) → grant → image lands in Photos with sprite composited at forehead.
+   - Deny MediaLibrary permission → user-visible error; no orphaned files; button returns to `idle`.
+   - Switch to Map tab → new pin at current location with the favorite Pokémon's sprite.
+   - Airplane mode → capture still succeeds (no network needed).
+   - Inspect saved image: forehead-anchored sprite, photo correctly oriented.
+
+5. **Final pass:**
+   - `npm run lint` clean.
+   - `npm run format:check` clean.
+   - `npx tsc --noEmit` clean.
+   - Manual smoke test on Android device. iOS smoke test = open tab, confirm "Android only" notice renders.

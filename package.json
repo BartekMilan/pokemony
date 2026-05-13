@@ -10,7 +10,8 @@
     "lint": "eslint 'src/**/*.{ts,tsx}'",
     "lint:fix": "eslint 'src/**/*.{ts,tsx}' --fix",
     "format": "prettier --write 'src/**/*.{ts,tsx}'",
-    "format:check": "prettier --check 'src/**/*.{ts,tsx}'"
+    "format:check": "prettier --check 'src/**/*.{ts,tsx}'",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
@@ -21,6 +22,7 @@
     "@react-navigation/native-stack": "^7.14.12",
     "@shopify/flash-list": "2.0.2",
     "expo": "~54.0.33",
+    "expo-image-manipulator": "^55.0.16",
     "expo-location": "~19.0.8",
     "expo-media-library": "~18.2.1",
     "expo-status-bar": "~3.0.9",
@@ -31,19 +33,24 @@
     "react-native-reanimated": "~4.3.0",
     "react-native-safe-area-context": "~5.6.0",
     "react-native-screens": "~4.16.0",
-    "react-native-worklets": "~0.8.3"
+    "react-native-view-shot": "^4.0.3",
+    "react-native-vision-camera": "^4.7.3",
+    "react-native-vision-camera-face-detector": "^1.10.2",
+    "react-native-worklets": "~0.8.3",
+    "react-native-worklets-core": "^1.6.3"
   },
   "devDependencies": {
     "@types/react": "~19.1.0",
     "@typescript-eslint/eslint-plugin": "^8.59.2",
     "@typescript-eslint/parser": "^8.59.2",
+    "babel-preset-expo": "~54.0.10",
     "eslint": "^9.39.4",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.5",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-native": "^5.0.0",
+    "patch-package": "^8.0.1",
     "prettier": "^3.8.3",
-    "babel-preset-expo": "~54.0.10",
     "typescript": "~5.9.2"
   },
   "private": true
