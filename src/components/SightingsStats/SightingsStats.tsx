@@ -1,7 +1,10 @@
 import { StyleSheet, Text, View } from 'react-native';
 
 import type { MapPin } from '../../types/map';
-import { BORDER_RADIUS, COLORS, FONT_SIZES, SPACING } from '../../constants/theme';
+import { BORDER_RADIUS, COLORS, FONT_SIZES, FONT_WEIGHTS, SHADOWS, SPACING } from '../../constants/theme';
+
+const CARD_PADDING = 12;
+import { capitalize } from '../../utils/string';
 
 type Props = {
   pins: MapPin[];
@@ -11,11 +14,6 @@ type MostSpotted = {
   name: string;
   count: number;
 };
-
-function capitalize(value: string): string {
-  if (value.length === 0) return value;
-  return value.charAt(0).toUpperCase() + value.slice(1);
-}
 
 function findMostSpotted(pins: MapPin[]): MostSpotted | null {
   if (pins.length === 0) return null;
@@ -70,20 +68,16 @@ const styles = StyleSheet.create({
     maxWidth: 220,
     backgroundColor: COLORS.white,
     borderRadius: BORDER_RADIUS.md,
-    padding: 12,
-    shadowColor: '#000000',
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 4,
+    padding: CARD_PADDING,
+    ...SHADOWS.card,
   },
   summaryRow: {
     fontSize: FONT_SIZES.sm,
-    fontWeight: '600',
+    fontWeight: FONT_WEIGHTS.semibold,
     color: COLORS.textPrimary,
   },
   mostSpotted: {
-    fontSize: 11,
+    fontSize: FONT_SIZES.xxs,
     color: COLORS.textSecondary,
     marginTop: SPACING.xs,
   },

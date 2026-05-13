@@ -1,7 +1,9 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { COLORS, FONT_SIZES, SPACING } from '../../constants/theme';
+import { COLORS, FONT_SIZES, FONT_WEIGHTS, SPACING } from '../../constants/theme';
+
+const SIDE_PADDING = 32;
 
 type Props = {
   icon?: string;
@@ -28,15 +30,15 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 32,
+    paddingHorizontal: SIDE_PADDING,
   },
   icon: {
-    fontSize: 64,
+    fontSize: FONT_SIZES.icon,
     marginBottom: SPACING.md,
   },
   title: {
-    fontSize: 20,
-    fontWeight: '700',
+    fontSize: FONT_SIZES.xxl,
+    fontWeight: FONT_WEIGHTS.bold,
     color: COLORS.textPrimary,
     textAlign: 'center',
     marginBottom: SPACING.sm,

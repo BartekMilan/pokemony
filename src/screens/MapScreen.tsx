@@ -1,18 +1,17 @@
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Image,
   Platform,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
 import type { LongPressEvent, Region } from 'react-native-maps';
 
 import { PokemonBottomSheet } from '../components/PokemonBottomSheet';
+import { PokemonMarker } from '../components/PokemonMarker';
 import { SightingsStats } from '../components/SightingsStats';
 import { TypeFilter } from '../components/TypeFilter';
 import { useLocation } from '../hooks/useLocation';
@@ -31,48 +30,6 @@ const DEFAULT_REGION: Region = {
 };
 
 type Props = BottomTabScreenProps<TabParamList, 'Map'>;
-
-function capitalize(value: string): string {
-  if (value.length === 0) return value;
-  return value.charAt(0).toUpperCase() + value.slice(1);
-}
-
-type PokemonMarkerProps = {
-  pin: MapPin;
-  onPress: () => void;
-};
-
-const PokemonMarker = memo(function PokemonMarker({
-  pin,
-  onPress,
-}: PokemonMarkerProps) {
-  const [imageLoaded, setImageLoaded] = useState<boolean>(false);
-
-  const handleLoadEnd = useCallback((): void => {
-    setImageLoaded(true);
-  }, []);
-
-  return (
-    <Marker
-      coordinate={{ latitude: pin.latitude, longitude: pin.longitude }}
-      onPress={onPress}
-      tracksViewChanges={!imageLoaded}
-      anchor={{ x: 0.5, y: 1 }}
-    >
-      <View style={styles.markerCard}>
-        <Image
-          source={{ uri: pin.pokemonSprite }}
-          style={styles.markerSprite}
-          resizeMode="contain"
-          onLoadEnd={handleLoadEnd}
-        />
-        <Text style={styles.markerLabel} numberOfLines={1}>
-          {capitalize(pin.pokemonName)}
-        </Text>
-      </View>
-    </Marker>
-  );
-});
 
 export function MapScreen(_props: Props) {
   const { pins, isLoading: isLoadingPins, addPin } = useMapPins();
@@ -106,33 +63,29 @@ export function MapScreen(_props: Props) {
       : DEFAULT_REGION;
 
   const handleLongPress = useCallback(
-    (event: LongPressEvent): void => {
+    async (event: LongPressEvent): Promise<void> => {
       const { latitude, longitude } = event.nativeEvent.coordinate;
       setIsAddingPin(true);
-      void (async () => {
-        try {
-          await addPin(latitude, longitude);
-        } finally {
-          setIsAddingPin(false);
-        }
-      })();
+      try {
+        await addPin(latitude, longitude);
+      } finally {
+        setIsAddingPin(false);
+      }
     },
     [addPin],
   );
 
-  const handlePinPress = useCallback((pin: MapPin): void => {
+  const handlePinPress = useCallback(async (pin: MapPin): Promise<void> => {
     detailControllerRef.current?.abort();
     const controller = new AbortController();
     detailControllerRef.current = controller;
-    void (async () => {
-      try {
-        const pokemon = await getPokemonDetail(pin.pokemonId, controller.signal);
-        setDetailPokemon(pokemon);
-      } catch (err) {
-        if (err instanceof Error && err.name === 'AbortError') return;
-        // Network failures must not crash the app — leave the sheet closed.
-      }
-    })();
+    try {
+      const pokemon = await getPokemonDetail(pin.pokemonId, controller.signal);
+      setDetailPokemon(pokemon);
+    } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') return;
+      // Network failures must not crash the app — leave the sheet closed.
+    }
   }, []);
 
   const handleSheetClose = useCallback((): void => {
@@ -194,28 +147,6 @@ const styles = StyleSheet.create({
   },
   map: {
     ...StyleSheet.absoluteFillObject,
-  },
-  markerCard: {
-    width: 52,
-    borderRadius: 8,
-    backgroundColor: COLORS.white,
-    paddingHorizontal: 6,
-    paddingTop: SPACING.xs,
-    paddingBottom: 3,
-    alignItems: 'center',
-    elevation: 3,
-  },
-  markerSprite: {
-    width: 40,
-    height: 40,
-    backgroundColor: COLORS.white,
-  },
-  markerLabel: {
-    fontSize: 9,
-    fontWeight: '700',
-    color: COLORS.textPrimary,
-    textTransform: 'capitalize',
-    marginTop: 2,
   },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,

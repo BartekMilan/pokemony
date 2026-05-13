@@ -10,7 +10,13 @@ import {
 } from 'react-native';
 
 import type { PokemonSummary } from '../../types/pokemon';
-import { COLORS, FONT_SIZES, SPACING } from '../../constants/theme';
+import { COLORS, FONT_SIZES, FONT_WEIGHTS, SPACING } from '../../constants/theme';
+
+const SPRITE_SIZE = 64;
+const CARD_PADDING_V = 12;
+const IMAGE_RADIUS = 8;
+const STAR_MARGIN_LEFT = 6;
+import { capitalize, formatId } from '../../utils/string';
 
 const SPRITE_BASE_URL =
   'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon';
@@ -20,15 +26,6 @@ type Props = {
   onPress: (id: number) => void;
   isFavorite: boolean;
 };
-
-function capitalize(value: string): string {
-  if (value.length === 0) return value;
-  return value.charAt(0).toUpperCase() + value.slice(1);
-}
-
-function formatId(id: number): string {
-  return `#${String(id).padStart(3, '0')}`;
-}
 
 export function PokemonCard({ pokemon, onPress, isFavorite }: Props) {
   const [isImageLoaded, setIsImageLoaded] = useState<boolean>(false);
@@ -66,7 +63,7 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: CARD_PADDING_V,
     paddingHorizontal: SPACING.md,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: COLORS.border,
@@ -76,10 +73,10 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.backgroundSubtle,
   },
   imageWrapper: {
-    width: 64,
-    height: 64,
+    width: SPRITE_SIZE,
+    height: SPRITE_SIZE,
     marginRight: SPACING.md,
-    borderRadius: 8,
+    borderRadius: IMAGE_RADIUS,
     overflow: 'hidden',
   },
   placeholder: {
@@ -89,8 +86,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   image: {
-    width: 64,
-    height: 64,
+    width: SPRITE_SIZE,
+    height: SPRITE_SIZE,
   },
   info: {
     flex: 1,
@@ -98,7 +95,7 @@ const styles = StyleSheet.create({
   id: {
     fontSize: FONT_SIZES.xs,
     color: COLORS.textSecondary,
-    fontWeight: '600',
+    fontWeight: FONT_WEIGHTS.semibold,
   },
   nameRow: {
     flexDirection: 'row',
@@ -106,11 +103,11 @@ const styles = StyleSheet.create({
   },
   name: {
     fontSize: FONT_SIZES.lg,
-    fontWeight: '600',
+    fontWeight: FONT_WEIGHTS.semibold,
     color: COLORS.textPrimary,
   },
   star: {
-    marginLeft: 6,
+    marginLeft: STAR_MARGIN_LEFT,
     fontSize: FONT_SIZES.md,
   },
 });

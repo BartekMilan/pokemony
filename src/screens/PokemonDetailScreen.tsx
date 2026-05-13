@@ -13,13 +13,9 @@ import { useFavoritePokemon } from '../hooks/useFavoritePokemon';
 import { usePokemonDetail } from '../hooks/usePokemonDetail';
 import type { ListStackParamList } from '../navigation/types';
 import { BORDER_RADIUS, COLORS, FONT_SIZES, SPACING } from '../constants/theme';
+import { capitalize } from '../utils/string';
 
 type Props = NativeStackScreenProps<ListStackParamList, 'PokemonDetail'>;
-
-function capitalize(value: string): string {
-  if (value.length === 0) return value;
-  return value.charAt(0).toUpperCase() + value.slice(1);
-}
 
 export function PokemonDetailScreen({ route, navigation }: Props) {
   const { pokemonId } = route.params;

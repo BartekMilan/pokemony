@@ -8,8 +8,13 @@ import {
 } from 'react-native';
 
 import { TYPE_COLORS } from '../../constants/pokemon';
-import { BORDER_RADIUS, COLORS, FONT_SIZES, SPACING } from '../../constants/theme';
+import { BORDER_RADIUS, COLORS, FONT_SIZES, FONT_WEIGHTS, SPACING } from '../../constants/theme';
+
+const CHIP_PADDING_V = 6;
+const CHIP_PADDING_H = 12;
+const FILTER_MARGIN_TOP = 12;
 import type { MapPin } from '../../types/map';
+import { capitalize } from '../../utils/string';
 
 const ALL_LABEL = 'All';
 
@@ -18,11 +23,6 @@ type Props = {
   selectedType: string | null;
   onSelectType: (type: string | null) => void;
 };
-
-function capitalize(value: string): string {
-  if (value.length === 0) return value;
-  return value.charAt(0).toUpperCase() + value.slice(1);
-}
 
 export function TypeFilter({ pins, selectedType, onSelectType }: Props) {
   const types = useMemo<string[]>(
@@ -92,15 +92,15 @@ export function TypeFilter({ pins, selectedType, onSelectType }: Props) {
 
 const styles = StyleSheet.create({
   wrapper: {
-    marginTop: 12,
+    marginTop: FILTER_MARGIN_TOP,
     marginHorizontal: SPACING.md,
   },
   scrollContent: {
     paddingRight: SPACING.sm,
   },
   chip: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
+    paddingVertical: CHIP_PADDING_V,
+    paddingHorizontal: CHIP_PADDING_H,
     borderRadius: BORDER_RADIUS.pill,
     marginRight: SPACING.sm,
   },
@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
   },
   chipText: {
     fontSize: FONT_SIZES.xs,
-    fontWeight: '700',
+    fontWeight: FONT_WEIGHTS.bold,
   },
   chipTextActive: {
     color: COLORS.white,

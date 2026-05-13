@@ -21,11 +21,29 @@ export const SPACING = {
 };
 
 export const FONT_SIZES = {
+  xxs: 11,
   xs: 12,
   sm: 13,
   md: 14,
   lg: 16,
   xl: 18,
+  xxl: 20,
+  icon: 64,
+};
+
+export const FONT_WEIGHTS = {
+  semibold: '600' as const,
+  bold: '700' as const,
+};
+
+export const SHADOWS = {
+  card: {
+    shadowColor: '#000000',
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 4,
+  },
 };
 
 export const BORDER_RADIUS = {
