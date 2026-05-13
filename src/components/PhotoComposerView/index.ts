@@ -1,0 +1,1 @@
+export { PhotoComposerView } from './PhotoComposerView';

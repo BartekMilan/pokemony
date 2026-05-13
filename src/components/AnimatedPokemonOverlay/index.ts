@@ -1,0 +1,1 @@
+export { AnimatedPokemonOverlay } from './AnimatedPokemonOverlay';

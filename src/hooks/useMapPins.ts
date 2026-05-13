@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { getPokemonDetail } from '../services/pokeapi';
 import type { MapPin } from '../types/map';
+import type { Pokemon } from '../types/pokemon';
 import {
   FALLBACK_SPRITE,
   MAX_POKEMON_ID,
@@ -13,8 +14,29 @@ import { STORAGE_KEYS } from '../constants/storage';
 type UseMapPinsResult = {
   pins: MapPin[];
   isLoading: boolean;
-  addPin: (latitude: number, longitude: number) => Promise<void>;
+  addPin: (latitude: number, longitude: number, pokemon?: Pokemon) => Promise<void>;
 };
+
+export function buildPinFromPokemon(
+  pokemon: Pokemon,
+  lat: number,
+  lng: number,
+): MapPin {
+  const sprite =
+    pokemon.sprites.front_default ??
+    pokemon.sprites.other['official-artwork'].front_default ??
+    FALLBACK_SPRITE;
+
+  return {
+    id: Date.now().toString(),
+    latitude: lat,
+    longitude: lng,
+    pokemonId: pokemon.id,
+    pokemonName: pokemon.name,
+    pokemonSprite: sprite,
+    pokemonTypes: pokemon.types.map((t) => t.type.name),
+  };
+}
 
 function pickRandomPokemonId(): number {
   const span = MAX_POKEMON_ID - MIN_POKEMON_ID + 1;
@@ -68,28 +90,48 @@ export function useMapPins(): UseMapPinsResult {
   }, []);
 
   const addPin = useCallback(
-    async (latitude: number, longitude: number): Promise<void> => {
+    async (
+      latitude: number,
+      longitude: number,
+      pokemon?: Pokemon,
+    ): Promise<void> => {
+      if (pokemon !== undefined) {
+        const newPin = buildPinFromPokemon(pokemon, latitude, longitude);
+        const next = [...pinsRef.current, newPin];
+        pinsRef.current = next;
+        setPins(next);
+        try {
+          await AsyncStorage.setItem(
+            STORAGE_KEYS.mapPins,
+            JSON.stringify(next),
+          );
+        } catch {
+          // Persistence is best-effort — UI already reflects the new pin.
+        }
+        return;
+      }
+
       addPinControllerRef.current?.abort();
       const controller = new AbortController();
       addPinControllerRef.current = controller;
 
       try {
         const randomId = pickRandomPokemonId();
-        const pokemon = await getPokemonDetail(randomId, controller.signal);
+        const fetched = await getPokemonDetail(randomId, controller.signal);
 
         const sprite =
-          pokemon.sprites.front_default ??
-          pokemon.sprites.other['official-artwork'].front_default ??
+          fetched.sprites.front_default ??
+          fetched.sprites.other['official-artwork'].front_default ??
           FALLBACK_SPRITE;
 
         const newPin: MapPin = {
           id: Date.now().toString(),
           latitude,
           longitude,
-          pokemonId: pokemon.id,
-          pokemonName: pokemon.name,
+          pokemonId: fetched.id,
+          pokemonName: fetched.name,
           pokemonSprite: sprite,
-          pokemonTypes: pokemon.types.map((t) => t.type.name),
+          pokemonTypes: fetched.types.map((t) => t.type.name),
         };
 
         const next = [...pinsRef.current, newPin];
