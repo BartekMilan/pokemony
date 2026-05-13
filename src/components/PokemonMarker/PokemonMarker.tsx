@@ -8,7 +8,7 @@ import { capitalize } from '../../utils/string';
 
 type Props = {
   pin: MapPin;
-  onPress: () => void;
+  onPress: (pin: MapPin) => void;
 };
 
 export const PokemonMarker = memo(function PokemonMarker({ pin, onPress }: Props) {
@@ -18,10 +18,14 @@ export const PokemonMarker = memo(function PokemonMarker({ pin, onPress }: Props
     setImageLoaded(true);
   }, []);
 
+  const handlePress = useCallback((): void => {
+    onPress(pin);
+  }, [onPress, pin]);
+
   return (
     <Marker
       coordinate={{ latitude: pin.latitude, longitude: pin.longitude }}
-      onPress={onPress}
+      onPress={handlePress}
       tracksViewChanges={!imageLoaded}
       anchor={{ x: 0.5, y: 1 }}
     >

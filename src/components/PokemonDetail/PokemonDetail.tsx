@@ -13,7 +13,7 @@ import type { Pokemon } from '../../types/pokemon';
 import { BORDER_RADIUS, COLORS, FONT_SIZES, FONT_WEIGHTS, SPACING } from '../../constants/theme';
 
 const ARTWORK_SIZE = 240;
-import { formatId } from '../../utils/string';
+import { capitalize, formatId } from '../../utils/string';
 import { PokemonMeta } from './PokemonMeta';
 import { StatsList } from './StatsList';
 import { TypeBadges } from './TypeBadges';
@@ -45,6 +45,7 @@ export function PokemonDetail({ pokemon, actionButton }: Props) {
         )}
       </View>
 
+      <Text style={styles.name}>{capitalize(pokemon.name)}</Text>
       <Text style={styles.id}>{formatId(pokemon.id)}</Text>
 
       <TypeBadges types={pokemon.types} />
@@ -79,6 +80,12 @@ const styles = StyleSheet.create({
   artwork: {
     width: ARTWORK_SIZE,
     height: ARTWORK_SIZE,
+  },
+  name: {
+    fontSize: FONT_SIZES.xxl,
+    color: COLORS.textPrimary,
+    fontWeight: FONT_WEIGHTS.bold,
+    marginBottom: SPACING.xs,
   },
   id: {
     fontSize: FONT_SIZES.md,

@@ -23,5 +23,6 @@ export const FALLBACK_TYPE_COLOR = '#9ca3af';
 export const MAX_STAT = 255;
 export const MIN_POKEMON_ID = 1;
 export const MAX_POKEMON_ID = 151;
-export const FALLBACK_SPRITE =
-  'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/0.png';
+import { SPRITE_BASE_URL } from './api';
+
+export const FALLBACK_SPRITE = `${SPRITE_BASE_URL}/0.png`;

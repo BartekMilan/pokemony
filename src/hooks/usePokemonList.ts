@@ -111,7 +111,6 @@ export function usePokemonList(): UsePokemonListResult {
       } finally {
         if (!signal.aborted) {
           setIsRefreshing(false);
-          setIsLoading(false);
         }
         inFlightRef.current = false;
       }

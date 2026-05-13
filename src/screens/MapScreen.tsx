@@ -1,7 +1,8 @@
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Platform,
   StyleSheet,
   View,
@@ -16,10 +17,9 @@ import { SightingsStats } from '../components/SightingsStats';
 import { TypeFilter } from '../components/TypeFilter';
 import { useLocation } from '../hooks/useLocation';
 import { useMapPins } from '../hooks/useMapPins';
+import { useMapPokemonDetail } from '../hooks/useMapPokemonDetail';
 import type { TabParamList } from '../navigation/types';
-import { getPokemonDetail } from '../services/pokeapi';
 import type { MapPin } from '../types/map';
-import type { Pokemon } from '../types/pokemon';
 import { BORDER_RADIUS, COLORS, SPACING } from '../constants/theme';
 
 const DEFAULT_REGION: Region = {
@@ -34,18 +34,11 @@ type Props = BottomTabScreenProps<TabParamList, 'Map'>;
 export function MapScreen(_props: Props) {
   const { pins, isLoading: isLoadingPins, addPin } = useMapPins();
   const { location, hasPermission } = useLocation();
+  const { pokemon: detailPokemon, fetchDetail, clearDetail } = useMapPokemonDetail();
   const insets = useSafeAreaInsets();
 
-  const [detailPokemon, setDetailPokemon] = useState<Pokemon | null>(null);
   const [isAddingPin, setIsAddingPin] = useState<boolean>(false);
   const [selectedType, setSelectedType] = useState<string | null>(null);
-  const detailControllerRef = useRef<AbortController | null>(null);
-
-  useEffect(() => {
-    return () => {
-      detailControllerRef.current?.abort();
-    };
-  }, []);
 
   const visiblePins =
     selectedType === null
@@ -68,6 +61,8 @@ export function MapScreen(_props: Props) {
       setIsAddingPin(true);
       try {
         await addPin(latitude, longitude);
+      } catch {
+        Alert.alert('Failed to add pin', 'Could not fetch a Pokémon. Please try again.');
       } finally {
         setIsAddingPin(false);
       }
@@ -75,23 +70,16 @@ export function MapScreen(_props: Props) {
     [addPin],
   );
 
-  const handlePinPress = useCallback(async (pin: MapPin): Promise<void> => {
-    detailControllerRef.current?.abort();
-    const controller = new AbortController();
-    detailControllerRef.current = controller;
-    try {
-      const pokemon = await getPokemonDetail(pin.pokemonId, controller.signal);
-      setDetailPokemon(pokemon);
-    } catch (err) {
-      if (err instanceof Error && err.name === 'AbortError') return;
-      // Network failures must not crash the app — leave the sheet closed.
-    }
-  }, []);
+  const handlePinPress = useCallback(
+    (pin: MapPin): void => {
+      void fetchDetail(pin.pokemonId);
+    },
+    [fetchDetail],
+  );
 
   const handleSheetClose = useCallback((): void => {
-    detailControllerRef.current?.abort();
-    setDetailPokemon(null);
-  }, []);
+    clearDetail();
+  }, [clearDetail]);
 
   return (
     <View style={styles.root}>
@@ -106,7 +94,7 @@ export function MapScreen(_props: Props) {
           <PokemonMarker
             key={pin.id}
             pin={pin}
-            onPress={() => handlePinPress(pin)}
+            onPress={handlePinPress}
           />
         ))}
       </MapView>

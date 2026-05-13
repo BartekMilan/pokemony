@@ -10,6 +10,8 @@ import {
 } from '../constants/pokemon';
 import { STORAGE_KEYS } from '../constants/storage';
 
+type StoredPin = Omit<MapPin, 'pokemonTypes'> & { pokemonTypes?: string[] };
+
 type UseMapPinsResult = {
   pins: MapPin[];
   isLoading: boolean;
@@ -25,7 +27,6 @@ export function useMapPins(): UseMapPinsResult {
   const [pins, setPins] = useState<MapPin[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  const pinsRef = useRef<MapPin[]>([]);
   const addPinControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -41,16 +42,12 @@ export function useMapPins(): UseMapPinsResult {
         const raw = await AsyncStorage.getItem(STORAGE_KEYS.mapPins);
         if (controller.signal.aborted) return;
         if (raw !== null) {
-          type StoredPin = Omit<MapPin, 'pokemonTypes'> & {
-            pokemonTypes?: string[];
-          };
           const parsed = JSON.parse(raw) as StoredPin[];
           if (Array.isArray(parsed)) {
             const hydrated: MapPin[] = parsed.map((pin) => ({
               ...pin,
               pokemonTypes: pin.pokemonTypes ?? [],
             }));
-            pinsRef.current = hydrated;
             setPins(hydrated);
           }
         }
@@ -92,21 +89,15 @@ export function useMapPins(): UseMapPinsResult {
           pokemonTypes: pokemon.types.map((t) => t.type.name),
         };
 
-        const next = [...pinsRef.current, newPin];
-        pinsRef.current = next;
-        setPins(next);
-
-        try {
-          await AsyncStorage.setItem(
-            STORAGE_KEYS.mapPins,
-            JSON.stringify(next),
-          );
-        } catch {
-          // Persistence is best-effort — UI already reflects the new pin.
-        }
+        setPins((prev) => {
+          const next = [...prev, newPin];
+          // Persistence is best-effort — fire and forget.
+          AsyncStorage.setItem(STORAGE_KEYS.mapPins, JSON.stringify(next)).catch(() => {});
+          return next;
+        });
       } catch (err) {
         if (err instanceof Error && err.name === 'AbortError') return;
-        // Network failures must not crash the app — silently skip the drop.
+        throw err;
       }
     },
     [],
