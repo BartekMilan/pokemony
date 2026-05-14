@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   StyleSheet,
   TouchableOpacity,
@@ -42,11 +42,20 @@ export function CrazyCameraView({
 
   const device = useCameraDevice(facing);
 
-  const { detectFaces } = useFaceDetector({
-    performanceMode: 'fast',
-    landmarkMode: 'all',
-    minFaceSize: 0.15,
-  });
+  const faceDetectorOptions = useMemo(
+    () => ({
+      performanceMode: 'fast' as const,
+      landmarkMode: 'all' as const,
+      minFaceSize: 0.15,
+      autoMode: true,
+      windowWidth: containerSize.width,
+      windowHeight: containerSize.height,
+      cameraFacing: facing,
+    }),
+    [containerSize.width, containerSize.height, facing],
+  );
+
+  const { detectFaces } = useFaceDetector(faceDetectorOptions);
 
   const frameProcessor = useFrameProcessor(
     (frame) => {
@@ -81,14 +90,16 @@ export function CrazyCameraView({
 
   return (
     <View style={styles.container} onLayout={handleLayout}>
-      <Camera
-        ref={cameraRef}
-        style={StyleSheet.absoluteFill}
-        device={device}
-        isActive
-        frameProcessor={frameProcessor}
-        photo
-      />
+      {containerSize.width > 1 && (
+        <Camera
+          ref={cameraRef}
+          style={StyleSheet.absoluteFill}
+          device={device}
+          isActive
+          frameProcessor={frameProcessor}
+          photo
+        />
+      )}
 
       <AnimatedPokemonOverlay
         sharedBounds={sharedBounds}
