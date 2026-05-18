@@ -22,12 +22,14 @@ public class ExpoSettingsModule: Module {
     }
 
     OnStopObserving(ORIENTATION_EVENT) {
-      NotificationCenter.default.removeObserver(
-      self,
-      name: UIDevice.orientationDidChangeNotification,
-      object: nil
-    )
+        NotificationCenter.default.removeObserver(
+        self,
+        name: UIDevice.orientationDidChangeNotification,
+        object: nil
+      )
     }
+
+    View(ExpoSettingsView.self) {}
   }
 
   private func currentOrientation() -> String {
