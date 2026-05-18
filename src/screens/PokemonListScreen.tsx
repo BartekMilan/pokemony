@@ -8,7 +8,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { PokemonCard } from '../components/PokemonCard';
 import { useFavoritePokemon } from '../hooks/useFavoritePokemon';
@@ -17,9 +18,9 @@ import type { ListStackParamList } from '../navigation/types';
 import type { PokemonSummary } from '../types/pokemon';
 import { COLORS, FONT_SIZES, SPACING } from '../constants/theme';
 
-type Props = NativeStackScreenProps<ListStackParamList, 'PokemonList'>;
-
-export function PokemonListScreen({ navigation }: Props) {
+export function PokemonListScreen() {
+  const navigation =
+    useNavigation<NativeStackNavigationProp<ListStackParamList>>();
   const {
     pokemon,
     isLoading,
@@ -70,6 +71,7 @@ export function PokemonListScreen({ navigation }: Props) {
 
   return (
     <FlashList
+      style={styles.list}
       data={pokemon}
       keyExtractor={(item) => String(item.id)}
       renderItem={renderItem}
@@ -97,6 +99,9 @@ export function PokemonListScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
+  list: {
+    flex: 1,
+  },
   centered: {
     flex: 1,
     alignItems: 'center',

@@ -10,7 +10,9 @@
     "lint": "eslint 'src/**/*.{ts,tsx}'",
     "lint:fix": "eslint 'src/**/*.{ts,tsx}' --fix",
     "format": "prettier --write 'src/**/*.{ts,tsx}'",
-    "format:check": "prettier --check 'src/**/*.{ts,tsx}'"
+    "format:check": "prettier --check 'src/**/*.{ts,tsx}'",
+    "build:expo-settings": "npm run build --prefix modules/expo-settings",
+    "postinstall": "npm run build --prefix modules/expo-settings"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
@@ -23,6 +25,7 @@
     "expo": "~54.0.33",
     "expo-location": "~19.0.8",
     "expo-media-library": "~18.2.1",
+    "expo-settings": "file:./modules/expo-settings",
     "expo-status-bar": "~3.0.9",
     "react": "19.1.0",
     "react-native": "0.81.5",
@@ -37,13 +40,13 @@
     "@types/react": "~19.1.0",
     "@typescript-eslint/eslint-plugin": "^8.59.2",
     "@typescript-eslint/parser": "^8.59.2",
+    "babel-preset-expo": "~54.0.10",
     "eslint": "^9.39.4",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.5",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-native": "^5.0.0",
     "prettier": "^3.8.3",
-    "babel-preset-expo": "~54.0.10",
     "typescript": "~5.9.2"
   },
   "private": true

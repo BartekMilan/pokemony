@@ -1,8 +1,8 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { PokemonDetailScreen } from '../screens/PokemonDetailScreen';
-import { PokemonListScreen } from '../screens/PokemonListScreen';
 import type { ListStackParamList } from './types';
+import { ListTopTabs } from './ListTopTabs';
 
 const Stack = createNativeStackNavigator<ListStackParamList>();
 
@@ -10,9 +10,9 @@ export function ListStack() {
   return (
     <Stack.Navigator>
       <Stack.Screen
-        name="PokemonList"
-        component={PokemonListScreen}
-        options={{ title: 'Pokémon' }}
+        name="ListTabs"
+        component={ListTopTabs}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="PokemonDetail"

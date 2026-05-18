@@ -1,7 +1,12 @@
 import type { NavigatorScreenParams } from '@react-navigation/native';
 
-export type ListStackParamList = {
+export type ListTopTabsParamList = {
   PokemonList: undefined;
+  NativeTest: undefined;
+};
+
+export type ListStackParamList = {
+  ListTabs: undefined;
   PokemonDetail: { pokemonId: number };
 };
 
