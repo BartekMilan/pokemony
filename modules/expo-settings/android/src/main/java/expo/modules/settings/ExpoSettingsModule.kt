@@ -31,6 +31,12 @@ class ExpoSettingsModule : Module() {
     OnStopObserving(ORIENTATION_EVENT) {
       context.applicationContext.unregisterComponentCallbacks(configCallback)
     }
+
+    View(ExpoSettingsView::class) {
+      Prop("message") { view: ExpoSettingsView, message: String ->
+        view.setMessage(message)
+      }
+    }
   }
 
   private fun currentOrientation(): String {

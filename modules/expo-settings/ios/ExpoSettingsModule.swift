@@ -22,11 +22,17 @@ public class ExpoSettingsModule: Module {
     }
 
     OnStopObserving(ORIENTATION_EVENT) {
-      NotificationCenter.default.removeObserver(
-      self,
-      name: UIDevice.orientationDidChangeNotification,
-      object: nil
-    )
+        NotificationCenter.default.removeObserver(
+        self,
+        name: UIDevice.orientationDidChangeNotification,
+        object: nil
+      )
+    }
+
+    View(ExpoSettingsView.self) {
+      Prop("message") { (view: ExpoSettingsView, message: String) in
+        view.setMessage(message)
+      }
     }
   }
 

@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { NativeTestScreen } from '../screens/NativeTestScreen';
+// import { NativeTestScreen } from '../screens/NativeTestScreen';
+import { NativeViewTestScreen } from '../screens/NativeViewTestScreen';
 import { PokemonListScreen } from '../screens/PokemonListScreen';
 import {
   COLORS,
@@ -50,7 +51,7 @@ export function ListTopTabs() {
         {activeTab === 'PokemonList' ? (
           <PokemonListScreen />
         ) : (
-          <NativeTestScreen />
+          <NativeViewTestScreen />
         )}
       </View>
     </SafeAreaView>
