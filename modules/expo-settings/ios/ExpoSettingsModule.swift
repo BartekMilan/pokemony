@@ -29,11 +29,7 @@ public class ExpoSettingsModule: Module {
       )
     }
 
-    View(ExpoSettingsView.self) {
-      Prop("message") { (view: ExpoSettingsView, message: String) in
-        view.setMessage(message)
-      }
-    }
+    View(ExpoSettingsView.self) {}
   }
 
   private func currentOrientation() -> String {

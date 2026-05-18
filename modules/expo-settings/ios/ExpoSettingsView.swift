@@ -1,23 +1,23 @@
 import ExpoModulesCore
+import SwiftUI
 import UIKit
 
 public class ExpoSettingsView: ExpoView {
-  private let label = UILabel()
+  private let hostingController: UIHostingController<IncrementingCurrencyView>
 
   public required init(appContext: AppContext? = nil) {
+    let rootView = IncrementingCurrencyView()
+    hostingController = UIHostingController(rootView: rootView)
+    hostingController.view.backgroundColor = .clear
+
     super.init(appContext: appContext)
-    backgroundColor = .systemBlue
-    label.textAlignment = .center
-    label.textColor = .white
-    addSubview(label)
+
+    clipsToBounds = true
+    addSubview(hostingController.view)
   }
 
   public override func layoutSubviews() {
     super.layoutSubviews()
-    label.frame = bounds
-  }
-
-  public func setMessage(_ message: String) {
-    label.text = message
+    hostingController.view.frame = bounds
   }
 }

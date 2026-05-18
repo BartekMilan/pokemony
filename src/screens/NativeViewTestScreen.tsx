@@ -5,10 +5,7 @@ import { COLORS, SPACING } from '../constants/theme';
 export function NativeViewTestScreen() {
   return (
     <View style={styles.container}>
-      <ExpoSettingsView
-        style={styles.nativeView}
-        message="Hello from native UI"
-      />
+      <ExpoSettingsView style={styles.nativeView} />
     </View>
   );
 }

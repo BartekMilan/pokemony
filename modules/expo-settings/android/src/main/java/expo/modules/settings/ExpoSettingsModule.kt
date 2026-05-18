@@ -32,11 +32,7 @@ class ExpoSettingsModule : Module() {
       context.applicationContext.unregisterComponentCallbacks(configCallback)
     }
 
-    View(ExpoSettingsView::class) {
-      Prop("message") { view: ExpoSettingsView, message: String ->
-        view.setMessage(message)
-      }
-    }
+    View(ExpoSettingsView::class) {}
   }
 
   private fun currentOrientation(): String {

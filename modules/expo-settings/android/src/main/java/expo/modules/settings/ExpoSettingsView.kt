@@ -8,8 +8,9 @@ import expo.modules.kotlin.views.ExpoView
 
 class ExpoSettingsView(context: Context, appContext: AppContext) : ExpoView(context, appContext) {
   private val textView = TextView(context).also {
-    it.setTextColor(Color.WHITE)
+    it.setTextColor(Color.DKGRAY)
     it.textAlignment = TextView.TEXT_ALIGNMENT_CENTER
+    it.text = "IncrementingCurrencyView is available on iOS"
     addView(it)
   }
 
@@ -18,7 +19,4 @@ class ExpoSettingsView(context: Context, appContext: AppContext) : ExpoView(cont
     textView.layout(0, 0, right - left, bottom - top)
   }
 
-  fun setMessage(message: String) {
-    textView.text = message
-  }
 }
