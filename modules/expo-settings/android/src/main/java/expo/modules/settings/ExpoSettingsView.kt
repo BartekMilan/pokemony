@@ -1,22 +1,23 @@
 package expo.modules.settings
 
 import android.content.Context
-import android.graphics.Color
-import android.widget.TextView
+import androidx.compose.ui.platform.ComposeView
 import expo.modules.kotlin.AppContext
 import expo.modules.kotlin.views.ExpoView
 
 class ExpoSettingsView(context: Context, appContext: AppContext) : ExpoView(context, appContext) {
-  private val textView = TextView(context).also {
-    it.setTextColor(Color.DKGRAY)
-    it.textAlignment = TextView.TEXT_ALIGNMENT_CENTER
-    it.text = "IncrementingCurrencyView is available on iOS"
-    addView(it)
-  }
+  private val composeView =
+    ComposeView(context).also { view ->
+      view.setContent {
+        IncrementingCurrencyView()
+      }
+      addView(view, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
+    }
 
   override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
     super.onLayout(changed, left, top, right, bottom)
-    textView.layout(0, 0, right - left, bottom - top)
+    val width = right - left
+    val height = bottom - top
+    composeView.layout(0, 0, width, height)
   }
-
 }
